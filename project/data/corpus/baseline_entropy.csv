@@ -1,0 +1,7 @@
+filename,size_bytes,entropy_bits_per_byte
+text_small.txt,10238,4.726758
+text_large.txt,204799,4.616242
+json_small.json,10313,4.520237
+json_large.json,205012,4.532409
+random_small.bin,10240,7.980441
+random_large.bin,204800,7.999148
