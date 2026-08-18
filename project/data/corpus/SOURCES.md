@@ -52,6 +52,16 @@ the Project Gutenberg License, which permits free copying and reuse.
    UTF-8 character is cut mid-way, producing `text_small.txt` (10,238
    bytes) and `text_large.txt` (204,799 bytes).
 
+## Integrity checksums
+
+`CHECKSUMS.sha256` holds SHA-256 hashes of all 6 frozen corpus files,
+generated after the `corpus-v1-frozen` git tag was created. It documents
+the exact frozen byte content independent of git (e.g. if `data/corpus/`
+is ever copied out on its own for the thesis appendix), and lets anyone
+re-verify the corpus hasn't drifted with:
+
+    shasum -a 256 -c data/corpus/CHECKSUMS.sha256
+
 ## Reference paper context (not load-bearing for file generation)
 
 *A New Look at the Classical Entropy of Written English*
