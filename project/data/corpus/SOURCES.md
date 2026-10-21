@@ -52,13 +52,46 @@ the Project Gutenberg License, which permits free copying and reuse.
    UTF-8 character is cut mid-way, producing `text_small.txt` (10,238
    bytes) and `text_large.txt` (204,799 bytes).
 
+## Text pool extension (added after the corpus freeze, for n=50 repeated sampling)
+
+`text_large.txt` alone only allows 19 non-overlapping 10240-byte slices,
+not enough for a 50-sample repeated-sampling measurement
+(`scripts/measure_repeated_sample_post_classical_n50.py`). Two more
+public-domain Project Gutenberg prose texts were added via
+`scripts/build_text_pool.py` to build a large enough pool. These are
+NOT part of the original frozen 6-file corpus (`corpus-v1-frozen`) and
+are not used anywhere text_large.txt/text_small.txt already are:
+
+- **Alice's Adventures in Wonderland**, Lewis Carroll. First published
+  1865 (United Kingdom); author died 1898. Project Gutenberg eBook #11.
+  `https://www.gutenberg.org/cache/epub/11/pg11.txt`.
+  -> `data/corpus/text_pool_alice.txt` (154,474 bytes, 15 non-overlapping
+  10240-byte slices).
+- **Moby-Dick; or, The Whale**, Herman Melville. First published 1851
+  (United States); author died 1891. Project Gutenberg eBook #2701.
+  `https://www.gutenberg.org/cache/epub/2701/pg2701.txt`.
+  -> `data/corpus/text_pool_mobydick.txt` (1,256,436 bytes, 122
+  non-overlapping 10240-byte slices).
+
+Both are unambiguously public domain by the same standard as Pride and
+Prejudice above (published well before 1929, authors long deceased,
+distributed by Project Gutenberg under the Project Gutenberg License).
+Cleaning strips everything outside Gutenberg's own
+`*** START OF ... ***` / `*** END OF ... ***` markers -- no hand-edited
+or AI-generated substitute text, same policy as the original corpus.
+Combined with `text_large.txt`'s 19 slices, the three files together
+provide 156 non-overlapping 10240-byte slices, comfortably more than
+the 50 needed.
+
 ## Integrity checksums
 
-`CHECKSUMS.sha256` holds SHA-256 hashes of all 6 frozen corpus files,
-generated after the `corpus-v1-frozen` git tag was created. It documents
-the exact frozen byte content independent of git (e.g. if `data/corpus/`
-is ever copied out on its own for the thesis appendix), and lets anyone
-re-verify the corpus hasn't drifted with:
+`CHECKSUMS.sha256` holds SHA-256 hashes of the 6 frozen corpus files
+(generated after the `corpus-v1-frozen` git tag was created) plus the 2
+text-pool-extension files above (appended by `scripts/build_text_pool.py`,
+after the freeze). It documents the exact frozen byte content independent
+of git (e.g. if `data/corpus/` is ever copied out on its own for the
+thesis appendix), and lets anyone re-verify the corpus hasn't drifted
+with:
 
     shasum -a 256 -c data/corpus/CHECKSUMS.sha256
 

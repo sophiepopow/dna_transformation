@@ -1,0 +1,16 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "network": {
+      "allowedDomains": [
+        "pypi.org",
+        "files.pythonhosted.org",
+        "*.pythonhosted.org",
+        "github.com",
+        "raw.githubusercontent.com",
+        "www.gutenberg.org",
+        "*.gutenberg.org"
+      ]
+    }
+  }
+}

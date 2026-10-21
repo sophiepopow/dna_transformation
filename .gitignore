@@ -1,3 +1,6 @@
 .venv
 __pycache__/
 *.pyc
+*.pdf
+.DS_Store
+project/data/aes_key.bin

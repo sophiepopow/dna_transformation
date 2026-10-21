@@ -1,0 +1,2181 @@
+% ============================================================
+% Master's thesis skeleton — English version, compliant with
+% WIiT PK guidelines (Załącznik do Uchwały Kolegium WIiT
+% z dn. 25.09.2023 r. nr 74/2023)
+% ============================================================
+% Formatting per the guidelines (language-independent):
+%  - A4, portrait, double-sided printing (twoside)
+%  - font: Times New Roman 12pt (newtxtext as the equivalent —
+%    mathptmx was tested and found to silently drop several
+%    Polish diacritics under T1 encoding; newtxtext does not)
+%  - line spacing: 1.5
+%  - margins: top 2.5 cm / bottom 2.5 cm / inner 3.5 cm / outer 2.5 cm
+%  - paragraph indent: 1.25 cm
+%  - page numbering: from the table of contents (p. 2), 10pt, centered
+%  - title page: page number must not be visible
+%  - NOTE: per the guidelines, an English-language thesis must still
+%    include a Polish-language "Streszczenie" (abstract) — kept below,
+%    typeset with \selectlanguage{polish} so Polish hyphenation/diacritics
+%    are handled correctly even though the rest of the document is English.
+% ============================================================
+
+\documentclass[12pt,a4paper,twoside]{report}
+
+% --- Encoding and language (English as main, Polish available for the
+%     mandatory Polish abstract) ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish,english]{babel}
+
+% --- Font (Times New Roman equivalent) ---
+% newtxtext confirmed by test compilation to render Polish diacritics
+% correctly under T1 + babel — needed here for the mandatory Polish
+% "Streszczenie" section even though the rest of the thesis is in English.
+\usepackage{newtxtext}
+
+% --- Margins per the guidelines (mirrored for double-sided printing) ---
+\usepackage[a4paper,twoside,
+  top=2.5cm, bottom=2.5cm,
+  inner=3.5cm, outer=2.5cm]{geometry}
+
+% --- 1.5 line spacing ---
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Let pages end at their natural height instead of stretching
+%     vertical glue to fill every page exactly (report class default
+%     is \flushbottom) --- the stretching was exaggerating the gaps
+%     around tables/figures on shorter pages, making them look
+%     stranded in the middle of mostly-blank pages. ---
+\raggedbottom
+
+% --- Paragraph indent ---
+\setlength{\parindent}{1.25cm}
+
+% --- Header/footer: centered page number, 10pt ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\fontsize{10pt}{12pt}\selectfont\thepage}
+
+% --- Figures, tables, references ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+% Wrapping p{} columns for Table 4.1, whose long cell text (e.g.
+% "entropy, chi-square, avalanche, correlation") overflowed the right
+% margin under plain non-wrapping l columns.
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}   % \mathbb, used in Section 3.3
+\usepackage{hyperref}
+% hypertexnames=false suppresses a pre-existing duplicate-anchor warning that
+% hyperref emits for every float in this document; harmless, but noisy.
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue,
+  hypertexnames=false}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
+
+% --- Forces the AES-GCM figure below to stay in Section 3.5, instead of
+%     floating past the Section 3.6 heading when it does not fit on the
+%     current page (observed with plain [htbp] placement) ---
+\usepackage{float}
+
+% --- Chapter 7 data visualizations (histogram, heatmap, bar chart) ---
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+% Sequential blue, matches this project's validated categorical palette
+% (used elsewhere for M6's Artifact figures) reused here for consistency.
+\definecolor{seqblue}{HTML}{2a78d6}
+
+% --- Source-code listings (implementation snippets, Chapters 3, 5, 6) ---
+\usepackage{listings}
+\lstdefinestyle{pythonstyle}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{gray!60!black},
+  stringstyle=\color{seqblue!70!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  rulecolor=\color{gray!40},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+  xleftmargin=1.25cm,
+  framexleftmargin=5pt,
+}
+\lstset{style=pythonstyle}
+% Listings are numbered and captioned throughout, so the document also
+% carries a List of Listings alongside the figure and table lists.
+\renewcommand{\lstlistlistingname}{List of Listings}
+
+% --- Equation numbering per chapter ---
+\numberwithin{equation}{chapter}
+
+\begin{document}
+
+% ============================================================
+% TITLE PAGE
+% ------------------------------------------------------------
+% Kept in its own file (title_page.tex). Per the WIiT PK
+% guidelines the title page must carry no visible page number,
+% so that file is responsible for \thispagestyle{empty} (or a
+% titlepage environment, which applies it automatically).
+% ============================================================
+\input{title_page}
+
+% ============================================================
+% STRESZCZENIE (PL, mandatory even in an English thesis) / ABSTRACT (EN)
+% ============================================================
+\selectlanguage{polish}
+\chapter*{Streszczenie}
+\addcontentsline{toc}{chapter}{Streszczenie}
+
+Niniejsza praca bada, czy transformacja kodowania DNA pozostawia
+mierzalny odcisk statystyczny na danych o niskiej entropii (tekst, JSON)
+w odróżnieniu od danych o wysokiej entropii (dane losowe), oraz czy
+efekt ten zanika po nałożeniu klasycznego szyfrowania (AES-GCM). Zbadano
+dwa potoki przetwarzania (z transformacją DNA i bez niej, jako kontrolę)
+na zamrożonym korpusie testowym, mierząc entropię Shannona, statystykę
+chi-kwadrat, współczynnik kompresji, korelację, efekt lawinowy oraz
+narzut rozmiaru danych. Wyniki wskazują na niewielki sygnał statystyczny
+na etapie samej transformacji DNA, który zanika całkowicie po
+zastosowaniu szyfrowania klasycznego. Wnioskiem pracy jest to, że
+transformacja w domenie DNA tego rodzaju nie stanowi zamiennika
+szyfrowania klasycznego: jej własny wkład statystyczny jest mierzalny
+przed szyfrowaniem, lecz nie przeżywa nałożenia AES-GCM.
+
+\textbf{Słowa kluczowe:} kodowanie DNA, kryptografia lekka, IoT,
+entropia Shannona, AES-GCM, analiza statystyczna
+
+\selectlanguage{english}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This thesis investigates whether a DNA-encoding transform leaves a
+measurable statistical fingerprint on low-entropy data (text, JSON) as
+opposed to high-entropy data (random), and whether that effect
+disappears once classical encryption (AES-GCM) is layered on top. Two
+processing pipelines (with and without the DNA transform, as a control)
+were evaluated against a frozen test corpus, measuring Shannon entropy,
+chi-square statistic, compression ratio, correlation, avalanche effect,
+and size overhead. Results indicate a small statistical
+signal at the DNA-transform stage alone, which disappears entirely once
+classical encryption is applied.
+
+\textbf{Keywords:} DNA encoding, lightweight cryptography, IoT, Shannon
+entropy, AES-GCM, statistical analysis
+
+% ============================================================
+% TABLE OF CONTENTS (page 2, page number visible)
+% ============================================================
+\tableofcontents
+
+% ============================================================
+% LIST OF ABBREVIATIONS
+% ============================================================
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+
+\begin{description}
+  \item[AEAD] Authenticated Encryption with Associated Data
+  \item[AES-GCM] Advanced Encryption Standard, Galois/Counter Mode
+  \item[ECC] Elliptic Curve Cryptography
+  \item[DNA-LWCS] DNA-based Lightweight Cryptography System
+  \item[IoT] Internet of Things
+  \item[IV/nonce] Initialization Vector: a single-use value used in encryption
+  \item[NIST] National Institute of Standards and Technology
+  \item[UACI/NPCR] standard metrics used in image-encryption analysis
+\end{description}
+
+% ============================================================
+% CHAPTER 1 --- INTRODUCTION
+% ============================================================
+\chapter{Introduction}
+\label{ch:intro}
+
+% No figures/tables here --- narrative only: motivation, problem
+% justification, literature context.
+
+By the end of 2025, industry estimates put the number of active IoT
+devices worldwide at roughly 21~billion, up about 14\% over the
+previous year~\cite{iotanalytics2025}. IoT-targeted attacks surged by
+more than 100\% year-over-year in the first half of
+2024~\cite{sonicwall2024}, and one industry report puts the sustained
+volume at over 820{,}000 attack attempts recorded
+daily~\cite{stationx2026}. Much of this traffic remains unencrypted: a
+survey of 1.2~million IoT devices across enterprise and healthcare
+networks found 98\% of their traffic was unencrypted~\cite{unit42-2020},
+a figure still widely recycled today, years after that original survey.
+
+Most IoT devices operate under tight resource constraints: limited CPU,
+small memory, and a restricted energy budget~\cite{zinabu2025}. Security
+therefore has to fit inside that budget, or it is left out entirely.
+Conventional cryptographic standards
+were not designed with such constraints in mind: AES, RSA, and ECC alike
+are frequently too resource-intensive for the smallest devices, with AES
+in particular exhibiting lower power efficiency and a larger memory
+footprint than ciphers purpose-built for constrained
+hardware~\cite{zinabu2025}. This gap motivated a dedicated field of
+lightweight cryptography, aimed at preserving security while minimising
+computation, memory use, and energy
+consumption~\cite{thakor2021}. That effort was consolidated in 2023, when
+the U.S. National Institute of Standards and Technology (NIST) selected
+the Ascon family as the basis for its lightweight cryptography standard
+for constrained devices, later published as NIST~SP~800-232~\cite{nist800232}.
+
+DNA encoding is a research direction that tries to combine both
+strengths. It maps binary data onto sequences of nucleotides (A, T, C,
+G), then applies a transform to this DNA-domain representation, either
+before classical encryption or alongside it. Two papers form the
+starting point for this thesis's design. Aqeel et al.~\cite{aqeel2025}
+propose DNA-LWCS. This scheme derives key material from public DNA
+sequences. It combines a DNA-domain substitution-and-transposition step
+with Elliptic Curve Cryptography (ECC). The authors report good results
+for encryption time, throughput, and energy use on image data.
+Barman and Saha~\cite{dnaecc} take a similar approach: they encode data
+as DNA sequences before applying ECC-based encryption. The motivation
+given is the large number of possible DNA sequences and their apparent
+randomness.
+
+Both works share the same general idea. Classical encryption still
+provides the main confidentiality guarantee. The DNA-domain step is
+added as an extra, lightweight layer on top. Chapter~\ref{ch:foundations}
+describes the DNA-domain transform used in this thesis and how it
+differs from these two proposals. Chapter~\ref{ch:related} gives a full
+architectural comparison.
+
+A gap remains in the papers reviewed for this thesis: DNA-based cryptographic schemes are tested mainly on image data.
+DNA-LWCS itself reports its results on three sample
+photographs~\cite{aqeel2025}. It reports system-level metrics such as
+encryption time, correlation, and energy use. Neither reviewed paper
+tests whether the DNA-encoding step leaves a statistical fingerprint
+that depends on the structure of the input data. Neither tests whether
+such a fingerprint would survive once classical encryption is applied
+on top, even though a large part of IoT traffic is structured text
+and JSON: sensor readings, configuration messages, log records, and
+binary payloads. This thesis targets that gap. It tests whether a
+DNA-encoding transform's statistical behaviour differs across three data
+classes: low-entropy text, low-entropy JSON, and high-entropy random or
+binary data. It also compares an AES-GCM cipher with and without the
+DNA-encoding step. This before/after comparison does not appear in the
+two reviewed papers, where the DNA step is built into the encryption
+pipeline and not tested as a separate stage.
+
+One caveat regarding AES-GCM is that this thesis does not test whether DNA
+encoding is "lightweight" in a performance sense. AES-GCM is used as a
+standard, controlled baseline. Its role is to isolate the DNA
+transform's own effect, not to claim that the combined scheme is
+lightweight. Chapter~\ref{ch:limitations} explains why performance is
+measured but deliberately not reported as a result of this thesis.
+
+% ============================================================
+% CHAPTER 2 --- AIM AND SCOPE OF THE THESIS
+% ============================================================
+\chapter{Aim and Scope of the Thesis}
+\label{ch:aim}
+
+% Concise --- no technical detail, no tables/figures here.
+
+The aim of this thesis, and its research question, is to find out
+whether a DNA-encoding transform produces a measurably different
+statistical signature on low-entropy data (text, JSON) than on
+high-entropy data (random or compressed), and whether that effect
+disappears once classical encryption (AES-GCM) is layered on top.
+
+This aim is stated as two testable hypotheses, each evaluated in
+Chapter~\ref{ch:results} and answered in Chapter~\ref{ch:discussion}:
+
+\begin{description}
+\item[Hypothesis 1 (H1)] At the post-DNA-transform stage, the byte-value distribution
+of low-entropy input (text, JSON) departs from uniformity by
+measurably more than that of high-entropy input (random). H1 is
+rejected if the chi-square statistics of the three data classes are
+indistinguishable at that stage, given the between-sample spread
+reported in Section~\ref{sec:results-repeated-sample}.
+
+\item[Hypothesis 2 (H2)] After AES-GCM encryption, no such difference between data
+classes remains, and the measurements do not depend on whether the DNA
+step ran. H2 is rejected if any metric separates the data classes, or
+separates Pipeline A from Pipeline B, at the post-classical stage.
+\end{description}
+
+Scope of the thesis covers three data classes (text, JSON,
+random), two processing pipelines (DNA transform combined with AES-GCM,
+and AES-GCM alone as a control), and three measurement stages (input
+data, post-DNA-transform, post-classical-encryption).
+
+The statistical testing used in this thesis does not replace formal
+cryptanalysis. This caveat is adapted from NIST SP 800-22~\cite{nist80022}.
+The scope leaves out the following on purpose: the full NIST STS test
+suite, ECC/ECDH, image data, and energy-consumption profiling.
+Chapter~\ref{ch:limitations} explains why.
+
+The thesis is organized as follows: Chapter~\ref{ch:foundations}
+presents the theoretical foundations of the mechanisms used;
+Chapter~\ref{ch:related} discusses related work;
+Chapter~\ref{ch:methodology} describes the research methodology;
+Chapter~\ref{ch:implementation} covers the implementation;
+Chapter~\ref{ch:results} presents the results obtained;
+Chapter~\ref{ch:discussion} discusses the results;
+Chapter~\ref{ch:limitations} covers the thesis's limitations; and
+Chapter~\ref{ch:summary} summarises the contributions and outlines
+future work.
+
+% ============================================================
+% CHAPTER 3 --- THEORETICAL FOUNDATIONS
+% ============================================================
+\chapter{Theoretical Foundations}
+\label{ch:foundations}
+
+\section{Bytes to DNA Sequences Transformation}
+\label{sec:bytes-to-dna}
+ Before any DNA-domain operation can be applied, the plaintext bytes must first be represented as nucleotides. Every byte consists of 8 bits; every 2 bits map to one nucleotide (A=00, T=01, C=10, G=11). A binary file becomes a sequence of A/T/C/G letters. This mapping is reversible, but does not bring any cryptographic properties on its own.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  bitbox/.style={draw, minimum width=0.75cm, minimum height=0.9cm, font=\ttfamily\large},
+  nucbox/.style={draw, minimum width=1.5cm, minimum height=0.9cm, font=\ttfamily\bfseries\large, fill=gray!12},
+  >=Stealth
+]
+  \node[bitbox] (b0) at (0.00,0) {1};
+  \node[bitbox] (b1) at (0.75,0) {0};
+  \node[bitbox] (b2) at (1.50,0) {1};
+  \node[bitbox] (b3) at (2.25,0) {1};
+  \node[bitbox] (b4) at (3.00,0) {0};
+  \node[bitbox] (b5) at (3.75,0) {0};
+  \node[bitbox] (b6) at (4.50,0) {0};
+  \node[bitbox] (b7) at (5.25,0) {1};
+  \node[anchor=east] at ($(b0.west)+(-0.3,0)$) {Byte:};
+
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+    (b0.south west) -- (b1.south east) node[midway, yshift=-0.4cm, font=\scriptsize] {10};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+    (b2.south west) -- (b3.south east) node[midway, yshift=-0.4cm, font=\scriptsize] {11};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+    (b4.south west) -- (b5.south east) node[midway, yshift=-0.4cm, font=\scriptsize] {00};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+    (b6.south west) -- (b7.south east) node[midway, yshift=-0.4cm, font=\scriptsize] {01};
+
+  \node[nucbox] (n0) at (0.375,-2.3) {C};
+  \node[nucbox] (n1) at (1.875,-2.3) {G};
+  \node[nucbox] (n2) at (3.375,-2.3) {A};
+  \node[nucbox] (n3) at (4.875,-2.3) {T};
+  \node[anchor=east] at ($(n0.west)+(-0.6,0)$) {DNA:};
+
+  \draw[->] ($(b0)!0.5!(b1)$) -- (n0.north);
+  \draw[->] ($(b2)!0.5!(b3)$) -- (n1.north);
+  \draw[->] ($(b4)!0.5!(b5)$) -- (n2.north);
+  \draw[->] ($(b6)!0.5!(b7)$) -- (n3.north);
+
+  \node[anchor=west, font=\scriptsize] at (6.4,-2.3) {%
+    \begin{tabular}{ll}
+    A = 00 & C = 10 \\
+    T = 01 & G = 11 \\
+    \end{tabular}};
+\end{tikzpicture}
+\caption{Byte-to-nucleotide mapping: every 2 bits of the input byte map
+to one of four nucleotides, using the fixed A/T/C/G codebook shown on
+the right.}
+\label{fig:byte-to-dna}
+\end{figure}
+
+\section{Why a Naive DNA Transform Fails}
+The first idea was to derive a mask from a DNA sequence, for example by
+hashing it, and combine it with the data using XOR. This is similar to
+the keystream-and-XOR approach that AES-GCM uses. This idea was tried
+during the implementation of this thesis, and it was rejected. A
+cryptographically strong mask pushes every input toward the same,
+near-maximal entropy, regardless of what the original data looked like.
+This follows from a basic property of XOR: if $M$ is uniformly
+distributed and independent of the plaintext $P$, then
+$C = P \oplus M$ is uniformly distributed regardless of $P$'s own
+distribution. As a result, the mask erases the exact
+signal this thesis needs to measure. See Chapter~\ref{ch:implementation}
+for the empirical details.
+
+\section{The Chained Modulo-4 Design}
+\label{sec:mod4chain}
+The final transform design uses addition in the nucleotide domain, with
+feedback:
+
+\begin{equation}
+c_i = \left( p_i + r_{i \bmod L} + c_{i-1} \right) \bmod 4
+\label{eq:mod4}
+\end{equation}
+
+where $p_i$ is the value of the $i$-th nucleotide of the input data,
+$r$ is the reference sequence of length $L$, and $c_{i-1}$ is the
+previously generated ciphertext nucleotide ($c_{-1} = 0$). Each output
+nucleotide depends on the entire history of the stream so far. This
+removes the periodicity found in a simpler design, one that just tiles
+the reference sequence without feedback.
+
+Equation~\ref{eq:mod4} is implemented directly in
+\texttt{src/dna\_transform.py}, as a single pass over the input holding
+one accumulator that carries $c_{i-1}$ from each iteration to the next:
+the feedback path drawn in Fig.~\ref{fig:mod4-chain}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=1.0cm and 1.5cm,
+  block/.style={draw, minimum width=2.1cm, minimum height=1cm, align=center, font=\small},
+  sumnode/.style={draw, circle, minimum size=0.9cm, font=\Large},
+  outnode/.style={draw, minimum width=2.1cm, minimum height=1cm, align=center, font=\small, fill=gray!12},
+  >=Stealth
+]
+  \node[block] (p) {$p_i$\\[2pt]input nucleotide};
+  \node[sumnode, right=of p] (sum) {$+$};
+  \node[block, right=of sum] (mod) {$\bmod\ 4$};
+  \node[outnode, right=of mod] (out) {$c_i$\\[2pt]output nucleotide};
+  \node[block, below=1.6cm of sum] (prev) {$c_{i-1}$\\[2pt]previous output};
+
+  \draw[->] (p) -- (sum);
+  \draw[->] (mod) -- (out);
+  \draw[->] (sum) -- (mod);
+  \draw[->] (prev.north) -- (sum.south);
+
+  \node[block, above=1.0cm of sum] (ref) {$r_{i \bmod L}$\\[2pt]reference sequence};
+  \draw[->] (ref.south) -- (sum.north);
+
+  \draw[->, dashed] (out.east) -- ++(1.2,0) |- node[near start, right, font=\scriptsize, align=left] {feeds forward as\\$c_{i-1}$ of step $i+1$} ++(0,-3.6) -| (prev.east);
+\end{tikzpicture}
+\caption{One step of the chained modulo-4 transform. Each output
+nucleotide $c_i$ combines the input nucleotide $p_i$, the matching
+reference-sequence nucleotide $r_{i \bmod L}$, and the previous step's
+own output $c_{i-1}$. That output is then carried forward into the next
+step. }
+\label{fig:mod4-chain}
+\end{figure}
+
+\subsection*{Closed form: the transform is a prefix sum}
+Equation~\ref{eq:mod4} is defined recursively, but the recursion
+unrolls into a closed form. Substituting $c_{i-1}$ repeatedly, and
+using $c_{-1} = 0$, gives
+
+\begin{equation}
+c_i = \left( \sum_{j=0}^{i} \left( p_j + r_{j \bmod L} \right) \right) \bmod 4 .
+\label{eq:prefixsum}
+\end{equation}
+
+Each output nucleotide is therefore a running total, modulo 4, of every
+input nucleotide and every reference nucleotide seen so far. Two
+properties follow directly, and both are used later in this thesis.
+
+First, the transform propagates a change in one direction only. If a
+single input nucleotide $p_k$ changes by $\delta$, then by
+Equation~\ref{eq:prefixsum} every output nucleotide $c_i$ with $i \ge k$
+changes by exactly the same constant $\delta \bmod 4$, and every output
+nucleotide with $i < k$ is unchanged. Section~\ref{sec:results-avalanche}
+uses this to explain the measured avalanche figure.
+
+Second, the reference sequence enters only through its own running
+total. Writing $R_i = \sum_{j \le i} r_{j \bmod L} \bmod 4$ for that
+accumulated mask, and $S = \sum_{j=0}^{L-1} r_j \bmod 4$ for the sum
+over one full period of the reference sequence, we have
+$R_{i+L} = (R_i + S) \bmod 4$. The accumulated mask therefore repeats
+with period $L$ only when $S \equiv 0 \pmod 4$; otherwise its period is
+$2L$ (when $S \equiv 2$) or $4L$ (when $S \equiv 1$ or $3$).
+Section~\ref{sec:refseq} evaluates $S$ for the reference sequence
+actually used here.
+
+\subsection*{Inverting the transform}
+The inverse transform, \texttt{dna\_inverse\_transform}, recovers
+$p_i$ by rearranging Equation~\ref{eq:mod4}:
+$p_i = (c_i - r_{i \bmod L} - c_{i-1}) \bmod 4$. This looks like a
+direct mirror of the forward loop, but one detail is not symmetric.
+The feedback value available while decrypting is $c_{i-1}$, the
+previous \emph{ciphertext} nucleotide, not $p_{i-1}$, the previous
+\emph{plaintext} nucleotide the forward loop would have used at that
+point. At position $i$, the ciphertext nucleotide $c_i$ is already
+known, since it is the input being decoded, so $c_{i-1}$ is always
+available by the time it is needed, even before $p_i$ itself has been
+computed. That is why the transform can be inverted one nucleotide at
+a time: Listing~\ref{lst:mod4chain-inverse} makes this explicit, with
+\texttt{prev} set to \texttt{c}, the value just consumed from the
+input, never to \texttt{p}, the value just recovered.
+
+\begin{lstlisting}[caption={Chained modulo-4 transform: the inverse
+loop, rearranging Equation~\ref{eq:mod4} to recover $p_i$.}, label={lst:mod4chain-inverse}]
+out_vals = []
+prev = 0
+for i, c in enumerate(cipher_vals):
+    r = ref_vals[i % rlen]
+    p = (c - r - prev) % 4
+    out_vals.append(p)
+    prev = c  # feedback uses the ciphertext nucleotide,
+              # always known at decrypt time
+\end{lstlisting}
+
+\section{The Role of the Reference Sequence}
+\label{sec:refseq}
+The reference sequence $r$ is a short, fixed sequence of nucleotides.
+It is public and does not need to stay secret. This is different from
+the AES key $K$, which must stay secret for the cipher to work.
+
+In this thesis, the reference sequence is stored in the file
+\texttt{data/reference\_sequence.txt}. It has $L=61$ nucleotides, stays
+the same for every run of the experiment, and reads
+
+\begin{center}
+{\ttfamily\small ATCGGATCTAGCTAGCTAGCTTACGGAATCCGGTACCTAGGCTATCGATCGTAGCTAGCTA}
+\end{center}
+
+Its base composition is close to even: 15 A, 15 C, 15 G, and 16 T, so
+each base accounts for between 24.59\% and 26.23\% of the sequence. The
+sequence contains the pattern \texttt{AGCT} five times, as two separate
+back-to-back runs: at positions 9, 13 and 17, giving
+\texttt{...AGCTAGCTAGCT...}, and again at positions 52 and 56, giving
+\texttt{...AGCTAGCT...} (positions are zero-based).
+
+For the accumulated mask defined in Section~\ref{sec:mod4chain}, what
+matters is the sum over one period. Under the mapping of
+Fig.~\ref{fig:byte-to-dna}, this sequence gives $S = 91$, and
+$91 \equiv 3 \pmod 4$. Since 3 generates the whole of
+$\mathbb{Z}_4$ under addition, the accumulated mask $R$ has period
+$4L = 244$ rather than $L = 61$. This is a property of the sequence
+rather than of the transform: a reference sequence whose nucleotide
+values happen to sum to a multiple of 4 would give an accumulated mask
+that repeats every $L$ positions instead.
+Section~\ref{sec:results-correction} returns to this point, because the
+alternative sequence compared there falls into exactly that case.
+
+In Equation~\ref{eq:mod4}, the reference sequence supplies the value
+$r_{i \bmod L}$ that gets added at position $i$. Most input files are
+longer than $L=61$ nucleotides. Because of this, the index
+$i \bmod L$ wraps around and reuses the reference sequence many times
+over the course of one file.
+
+\textbf{Example.} Take the first 5 nucleotides of the reference
+sequence, \texttt{r = ATCGG} ($L=5$ for this example). Using the
+mapping from Fig.~\ref{fig:byte-to-dna} ($A=0$, $T=1$, $C=2$, $G=3$),
+this gives $r = [0, 1, 2, 3, 3]$. For an input stream of 12 nucleotides
+($i = 0, \ldots, 11$), the index $i \bmod L$ cycles through
+$0,1,2,3,4,0,1,2,3,4,0,1$. Fig.~\ref{fig:refseq-tiling} shows this
+cycle. The same 5 values are reused more than twice across the 12 input
+positions.
+
+On its own, this reuse would repeat every $L$ positions and leave a
+visible period in the output. Section~\ref{sec:mod4chain} explains how
+the feedback term $c_{i-1}$ removes that periodicity.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  refbox/.style={draw, minimum width=0.9cm, minimum height=0.8cm, font=\ttfamily\small, fill=gray!12},
+  tilebox/.style={draw, minimum width=0.65cm, minimum height=0.75cm, font=\ttfamily\small},
+  >=Stealth
+]
+  % the reference sequence itself, L=5
+  \foreach \i/\x/\v in {0/0/A,1/0.95/T,2/1.9/C,3/2.85/G,4/3.8/G} {
+    \node[refbox] (r\i) at (\x,4.4) {\v};
+    \node[font=\scriptsize, above=0.05cm of r\i] {$r_{\i}$};
+  }
+  \node[left=0.4cm of r0, font=\small, align=right] {Reference $r$\\($L{=}5$):};
+
+  \draw[->] (2.4,3.9) -- node[right, font=\scriptsize, align=left] {tiled cyclically,\\wraps every $L$ positions} (2.4,3.0);
+
+  % tiled row: i mod L for i=0..11
+  \foreach \i/\x/\v in {0/0/A,1/0.65/T,2/1.3/C,3/1.95/G,4/2.6/G,5/3.25/A,6/3.9/T,7/4.55/C,8/5.2/G,9/5.85/G,10/6.5/A,11/7.15/T} {
+    \node[tilebox] (t\i) at (\x,2.0) {\v};
+    \node[font=\tiny, below=0.08cm of t\i] {$i{=}\i$};
+  }
+  \node[left=0.4cm of t0, font=\small, align=right] {Value used\\at position $i$:};
+
+  % braces to mark the three cycles
+  \draw[decorate, decoration={brace, amplitude=3pt}] (t0.north west) -- (t4.north east) node[midway, above=0.15cm, font=\scriptsize] {cycle 1};
+  \draw[decorate, decoration={brace, amplitude=3pt}] (t5.north west) -- (t9.north east) node[midway, above=0.15cm, font=\scriptsize] {cycle 2};
+  \draw[decorate, decoration={brace, amplitude=3pt}] (t10.north west) -- (t11.north east) node[midway, above=0.15cm, font=\scriptsize] {cycle 3};
+\end{tikzpicture}
+\caption{Tiling of a short, 5-nucleotide reference sequence
+(\texttt{ATCGG}, the first 5 nucleotides of the reference sequence
+used in this thesis) across 12 input positions. The index
+$i \bmod L$ wraps around after every $L=5$ positions, so the same 5
+values are reused for positions 5--9 and again, partially, for
+positions 10--11. Without the feedback term in
+Equation~\ref{eq:mod4}, this reuse would repeat every $L$ positions.}
+\label{fig:refseq-tiling}
+\end{figure}
+
+\section{AES-GCM Fundamentals}
+\label{sec:aesgcm}
+AES-GCM is an authenticated cipher. It gives both confidentiality and
+integrity at the same time. It does this by combining two mechanisms
+that share the same block-cipher key $K$. CTR-mode encryption provides
+confidentiality. GHASH, a chained multiply-accumulate operation over a
+Galois field, provides integrity~\cite{nist80038d}. Three values play a
+key role: the \emph{nonce} (a single-use value that seeds the counter,
+generated randomly on every call), the hash subkey $H = E_K(0^{128})$,
+and the authentication \emph{tag}. Reusing a nonce under the same key is
+a serious security problem, because it causes the same keystream to be
+reused across two different messages~\cite{nist80038d}. This thesis uses
+AES-256 in GCM mode throughout: the key in \texttt{data/aes\_key.bin} is
+32 bytes, and \texttt{src/classical\_crypto.py} wraps AES-256-GCM.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  ctrbox/.style={draw, minimum width=1.3cm, minimum height=0.7cm, font=\scriptsize},
+  ekbox/.style={draw, minimum width=1.2cm, minimum height=0.8cm, font=\small},
+  cbox/.style={draw, minimum width=1.1cm, minimum height=0.7cm, font=\small, fill=gray!12},
+  xorc/.style={draw, circle, minimum size=0.6cm, inner sep=0pt, font=\Large},
+  mulc/.style={draw, circle, minimum size=0.6cm, inner sep=0pt, font=\Large, fill=gray!12},
+  >=Stealth
+]
+  % --- CTR-mode encryption row (top): three plaintext blocks ---
+  \foreach \i/\x in {1/0,2/3,3/6} {
+    \node[ctrbox] (ctr\i) at (\x,6.0) {$\mathrm{ctr}_0{+}\i$};
+    \node[ekbox]  (ek\i)  at (\x,4.7) {$E_K$};
+    \node[xorc]   (xr\i)  at (\x,3.2) {$\oplus$};
+    \node[cbox]   (c\i)   at (\x,2.0) {$c_\i$};
+    \draw[->] (ctr\i) -- (ek\i);
+    \draw[->] (ek\i) -- (xr\i);
+    \draw[->] (xr\i) -- (c\i);
+    \node[left=0.15cm of xr\i, font=\small] {$m_\i$};
+    \draw[->] ($(xr\i)+(-1.0,0)$) -- (xr\i);
+  }
+
+  % --- H generation inset (top right) ---
+  \node[ekbox] (zek) at (9.2,5.4) {$E_K$};
+  \node[font=\small, left=0.2cm of zek] {$0^{128}$};
+  \draw[->] ($(zek)+(-1.0,0)$) -- (zek);
+  \node[cbox, right=0.6cm of zek] (hgen) {$H$};
+  \draw[->] (zek) -- (hgen);
+
+  % --- Tag-mask counter (ctr0), off to the side of the CTR row ---
+  \node[ctrbox] (ctr0) at (-2.6,6.0) {$\mathrm{ctr}_0$};
+  \node[ekbox] (ek0) at (-2.6,4.7) {$E_K$};
+  \draw[->] (ctr0) -- (ek0);
+
+  % --- GHASH chain (bottom): multiply-accumulate with H ---
+  \node[mulc] (m1) at (0,0.2) {$\otimes$};
+  \node[xorc] (x1) at (1.5,0.2) {$\oplus$};
+  \node[mulc] (m2) at (3,0.2) {$\otimes$};
+  \node[xorc] (x2) at (4.5,0.2) {$\oplus$};
+  \node[mulc] (m3) at (6,0.2) {$\otimes$};
+  \node[xorc] (x3) at (7.5,0.2) {$\oplus$};
+  \node[mulc] (m4) at (9,0.2) {$\otimes$};
+  \node[xorc] (xt) at (10.5,0.2) {$\oplus$};
+  \node[cbox] (tag) at (12.0,0.2) {$T$};
+  \node[cbox] (len) at (7.5,2.0) {$L$};
+
+  \draw[->] (c1.south) -- (m1.north);
+  \draw[->] (m1) -- (x1);
+  \draw[->] (c2.south) |- (x1.north);
+  \draw[->] (x1) -- (m2);
+  \draw[->] (m2) -- (x2);
+  \draw[->] (c3.south) |- (x2.north);
+  \draw[->] (x2) -- (m3);
+  \draw[->] (m3) -- (x3);
+  \draw[->] (len.south) -- (x3.north);
+  \draw[->] (x3) -- (m4);
+  \draw[->] (m4) -- (xt);
+  \draw[->] (ek0.south) |- (xt.north);
+  \draw[->] (xt) -- (tag);
+
+  \foreach \n in {m1,m2,m3,m4} {
+    \draw[->] ($(\n)+(0,-1.1)$) -- (\n) node[midway, right, font=\small] {$H$};
+  }
+
+  \node[font=\scriptsize, align=center, below=1.3cm of m1, xshift=0.4cm] {length block $L$\\encodes AAD/ciphertext lengths};
+\end{tikzpicture}}
+\caption{Structure of AES-GCM, based on the GCM
+specification~\cite{nist80038d}. Top: CTR-mode encryption. Successive
+counter values $\mathrm{ctr}_0{+}1, \mathrm{ctr}_0{+}2, \ldots$ are
+encrypted with $E_K$ and XORed with plaintext blocks $m_i$. This
+produces ciphertext blocks $c_i$. Top right: the hash subkey $H$ is
+derived once, by encrypting an all-zero block. Bottom: GHASH processes
+each ciphertext block and the length block $L$ in a chained
+multiply-accumulate operation over $\mathrm{GF}(2^{128})$; each
+$\otimes$ multiplies by $H$. The result is XORed with
+$E_K(\mathrm{ctr}_0)$, the encryption of the counter value set aside
+for the tag and never used for plaintext, to produce the authentication
+tag $T$.}
+\label{fig:aes-gcm}
+\end{figure}
+
+\section{Composing the Mechanisms into Two Pipelines}
+\label{sec:pipelines}
+The two mechanisms above are combined into two processing pipelines.
+Both run on the same frozen corpus under the same AES key, so any
+statistical difference between them can be attributed to the
+DNA-transform step alone (Fig.~\ref{fig:pipelines}).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=0.7cm and 0.9cm,
+  stage/.style={draw, minimum width=2.4cm, minimum height=1.1cm, align=center, font=\small, rounded corners=2pt},
+  dnastage/.style={draw, minimum width=2.4cm, minimum height=1.1cm, align=center, font=\small, rounded corners=2pt, fill=gray!15},
+  >=Stealth
+]
+  % Pipeline A (top)
+  \node[stage] (a1) {Plaintext};
+  \node[dnastage, right=of a1] (a2) {DNA Transform\\(mod-4 chain)};
+  \node[stage, right=of a2] (a3) {AES-GCM\\Encryption};
+  \node[stage, right=of a3] (a4) {Ciphertext};
+  \node[font=\bfseries, above=0.2cm of a1, anchor=south west, xshift=-0.3cm] {Pipeline A};
+
+  \draw[->] (a1) -- (a2);
+  \draw[->] (a2) -- (a3);
+  \draw[->] (a3) -- (a4);
+
+  % Pipeline B (bottom), AES-GCM aligned under Pipeline A's AES-GCM stage
+  \node[stage, below=2.0cm of a1] (b1) {Plaintext};
+  \node[stage, right=of b1, xshift=2.9cm] (b2) {AES-GCM\\Encryption};
+  \node[stage, right=of b2] (b4) {Ciphertext};
+  \node[font=\bfseries, above=0.2cm of b1, anchor=south west, xshift=-0.3cm] {Pipeline B (control)};
+
+  \draw[->] (b1) -- (b2);
+  \draw[->] (b2) -- (b4);
+
+  % measurement points (dotted verticals + labels)
+  \draw[dotted] (a3.south) -- (b2.north);
+  \node[font=\scriptsize, align=center] at ($(a3)!0.5!(b2)$) {post-encryption};
+
+  \node[font=\scriptsize, align=center, above=0.3cm of a2] {post-DNA-transform\\(Pipeline A only)};
+\end{tikzpicture}
+\caption{The two processing pipelines under study. Pipeline A applies
+the DNA-domain transform before AES-GCM encryption. Pipeline B is the
+study control. It skips the DNA step and applies AES-GCM
+alone to the same plaintext under the same key. Measurements (entropy,
+chi-square, compression ratio, avalanche, correlation) are taken at the
+input and after each pipeline's final stage. Pipeline A also has an
+extra measurement point right after the DNA transform. Pipeline B has
+no equivalent point.}
+\label{fig:pipelines}
+\end{figure}
+
+% ============================================================
+% CHAPTER 4 --- RELATED WORK
+% ============================================================
+\chapter{Related Work}
+\label{ch:related}
+
+\section{DNA-LWCS as the Architectural Inspiration}
+Aqeel et al.~\cite{aqeel2025} propose DNA-LWCS. It combines keys
+derived from publicly available DNA sequences, a
+substitution-and-transposition stage, and ECC encryption (curve
+secp256r1/P-256). Three keys are derived from a large public set of DNA
+sequences. The substitution step applies XOR, modular addition, or AND,
+picked at random per run. The transposition step then rotates the
+result. ECC encrypts the message directly as elliptic-curve point
+arithmetic: $C_1 = kP$, $C_2 = M + kQ$. The scheme is tested on three
+sample images and compared against three other published
+schemes~\cite{aqeel2025}.
+
+Barman and Saha~\cite{dnaecc} follow a similar general idea: they encode
+data as DNA sequences, then apply ECC-based encryption. Their motivation
+is the large number of possible DNA sequences and their apparent
+randomness. This thesis has not reviewed~\cite{dnaecc} at the same level
+of detail as DNA-LWCS. Because of that, the detailed architectural
+comparison below is built against DNA-LWCS. Where the comparison applies
+to the general hybrid DNA-plus-ECC approach, it applies to both works.
+
+\section{Divergences from This Thesis}
+Table~\ref{tab:comparison} compares the two designs directly. The
+classical layer is the clearest difference: DNA-LWCS uses ECC, an
+asymmetric cipher, while this thesis uses AES-GCM, a symmetric cipher.
+Section~\ref{sec:ecc-justification} explains why. The test data also
+differs. DNA-LWCS reports its results on three sample images, while
+this thesis uses text, JSON, and random data. The two works also test
+different things. DNA-LWCS compares its whole system against other
+published schemes. This thesis instead compares the same cipher with
+and without the DNA-encoding step, which isolates the DNA step's own
+effect.
+
+\begin{table}[h]
+\centering
+\caption{Comparison of DNA-LWCS's architecture and this thesis's}
+\label{tab:comparison}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{5.3cm} >{\raggedright\arraybackslash}p{5.3cm}}
+\toprule
+ & DNA-LWCS & This thesis \\
+\midrule
+Classical layer & ECC (asymmetric) & AES-GCM (symmetric) \\
+Test data & 3 images & text/JSON/random \\
+Baseline & other published schemes & same cipher, DNA on/off \\
+Metrics & correlation, time, energy & entropy, chi-square, avalanche, correlation \\
+Role of the DNA sequence & source of randomness for key generation & fixed transform parameter \\
+Test corpus & data available on request, not fixed & frozen, checksummed corpus \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The reference DNA sequence plays a different role in each design. In
+DNA-LWCS, DNA sequences are a source of randomness used to generate
+keys. In this thesis, the reference sequence is a fixed, public
+parameter mixed directly with the plaintext (Section~\ref{sec:refseq}).
+The two test corpora also differ in how reproducible they are.
+DNA-LWCS's data is described as available on request, with no fixed set
+of files. This thesis uses a frozen, checksummed corpus, so the same
+input files can be reused in later work.
+
+\section{Justification for Replacing ECC with AES-GCM}
+\label{sec:ecc-justification}
+This thesis uses AES-GCM instead of ECC. 
+
+The research question in Chapter~\ref{ch:aim} does not depend on a
+specific classical cipher. It asks whether the DNA-encoding step
+changes the data's statistical signature, and whether that change
+survives classical encryption in general. Any classical cipher can
+answer this question.
+
+Pipeline A and
+Pipeline B (Section~\ref{sec:pipelines} and
+Fig.~\ref{fig:pipelines}) use the same key and the same cipher, with the
+DNA step present or absent. This isolates the DNA transform's own
+effect. AES-GCM is symmetric, so both pipelines can share one key
+directly. ECC is asymmetric, and does not fit this same-key,
+step-on/step-off comparison as directly.
+
+DNA-LWCS's own use of ECC also takes a different path than the more
+common pattern for bulk data. It encrypts the message directly through
+point arithmetic ($C_2 = M + kQ$). In many practical systems, ECC is
+used to exchange a key, and a symmetric cipher then encrypts the actual
+message. This hybrid pattern, often called ECIES, is described in the
+Standards for Efficient Cryptography~\cite{sec1}. Raw elliptic-curve
+point operations scale less directly to arbitrary-length messages than
+a block cipher does. Because of this, using AES-GCM here fits this
+thesis's ablation design well, alongside DNA-LWCS's own, differently
+motivated choice of ECC.
+
+DNA-LWCS is this thesis's architectural inspiration, but the two designs
+diverge from that starting point. DNA-LWCS asks a broad
+question: is the whole combined system efficient and secure compared to
+other whole systems. This thesis asks a narrower question: does the
+DNA-encoding step itself leave a statistical fingerprint, isolated from
+the cipher around it. DNA-LWCS's own paper does not test this narrower
+question, since it never runs its system with the DNA step removed.
+Running the original DNA-plus-ECC combination as a sanity check against
+the AES-GCM baseline used here would not change what the ablation design
+in Fig.~\ref{fig:pipelines} measures; Chapter~\ref{ch:limitations}
+records this as a scope boundary.
+
+\section{Differences in Evaluation Metrics}
+DNA-LWCS and this thesis report different metrics, which is why a
+direct, numeric comparison between the two is not possible. DNA-LWCS
+focuses on correlation, encryption time, and energy use: metrics well
+suited to comparing whole encryption systems against each other on
+image data. This thesis instead focuses on entropy, chi-square, and the
+avalanche effect: metrics suited to isolating one processing step's statistical contribution. DNA-LWCS also frames a higher correlation
+value as a desirable outcome, tied to preserving data recovery. This
+thesis instead measures correlation between plaintext and a later
+stage's output as a check on how much linear structure survives that
+stage, where a value near zero is the expected result once encryption
+has been applied. These reflect two different evaluation goals, image-system
+comparison versus step-by-step statistical isolation.
+
+% ============================================================
+% CHAPTER 5 --- RESEARCH METHODOLOGY
+% ============================================================
+\chapter{Research Methodology}
+\label{ch:methodology}
+
+\section{Threat Model}
+\label{sec:threat-model}
+
+This thesis measures statistical properties of ciphertext under a
+specific adversary model. Chapter~\ref{ch:limitations}
+notes that a statistical test is not a cryptanalytic security
+proof. This section defines the model: what the attacker observes,
+what they know, and what falls outside it.
+
+\textbf{What the attacker sees.} Only the final transmitted output is
+ever exposed: the nonce, the AES-GCM ciphertext body, and the
+authentication tag (Section~\ref{sec:aesgcm}), concatenated as
+\texttt{full\_aead\_bytes} (Section~\ref{sec:measurement-design}). The
+\texttt{post\_dna} stage is an internal, in-memory value produced
+immediately before AES-GCM encryption, used to isolate the DNA
+transform's own behaviour for this thesis's ablation design
+(Section~\ref{sec:pipeline-design}). This model assumes that value is
+never transmitted and never leaves the encrypting device; that is an
+assumption about how the pipeline is deployed, not a property the
+construction itself guarantees.
+
+\textbf{What the attacker knows.} Following Kerckhoffs's principle,
+the attacker is assumed to know the full system design: the
+DNA-domain transform (Section~\ref{sec:mod4chain}) and the reference
+sequence $r$, which is explicitly public and requires no protection
+(Section~\ref{sec:refseq}). The only value the attacker does not know
+is the AES key $K$, generated once and kept secret for the duration
+of the experiment.
+
+\textbf{What the attacker is trying to do.} This thesis considers a
+passive, ciphertext-only adversary: one who observes transmitted
+ciphertexts and attempts to learn something about the corresponding
+plaintext, for example, distinguishing structured text or JSON
+from random data without submitting chosen plaintexts or
+interacting with an encryption oracle. This matches what
+Chapter~\ref{ch:results}'s metrics test: whether \texttt{post\_classical}
+output alone reveals a statistical difference across data classes. It
+does not model active attacks like forgery, tampering, or
+chosen-ciphertext manipulation, which AES-GCM's authentication tag is designed to
+prevent~\cite{nist80038d} and which this thesis does not evaluate.
+
+\textbf{Out of scope.} Side-channel attacks (timing, power) against either the DNA
+transform or the AES-GCM implementation are out of scope, as are
+key-recovery attacks against AES itself and attacks on key
+distribution or management.
+
+The attacker in this model never sees \texttt{post\_dna} output, only
+\texttt{post\_classical}. Measurements taken at \texttt{post\_dna} are
+therefore diagnostics of the transform, not statements about what this
+adversary can observe.
+
+\section{Pipeline Comparison Design}
+\label{sec:pipeline-design}
+This thesis compares two pipelines directly. Pipeline A applies the DNA-domain transform,
+then AES-GCM. Pipeline B applies AES-GCM alone. Both pipelines use the
+same fixed AES key and the same input file. The only difference between
+them is the DNA-transform step. The design goal is to isolate the DNA
+transform's own effect on the data.
+
+Each pipeline exposes its intermediate stages. Pipeline A exposes three stages:
+\texttt{input}, \texttt{post\_dna}, and \texttt{post\_classical}.
+Pipeline B exposes two stages: \texttt{input} and
+\texttt{post\_classical}. Every metric in Section~\ref{sec:metrics} is
+computed at each available stage. This gives three measurement points
+for Pipeline A and two for Pipeline B, matching Fig.~\ref{fig:pipelines}.
+
+The two pipelines are deterministic, except for one part. AES-GCM
+generates a fresh random nonce on every call
+(Section~\ref{sec:aesgcm}). Because of this, \texttt{post\_classical}
+output differs between runs, even for the same input and key. The
+\texttt{post\_dna} stage has no randomness at all: the same input and
+reference sequence always produce the same output.
+Section~\ref{sec:measurement-design} explains why this difference matters for one
+of the metrics.
+
+\section{Test Data Corpus}
+\label{sec:corpus}
+The experiment uses a frozen corpus of six files, covering three data classes, each at two sizes, small (about 10 KB)
+and large (about 200 KB).
+
+\textbf{Text.} English prose, a slice taken from the opening of Jane
+Austen's \emph{Pride and Prejudice} (Project Gutenberg eBook \#1342,
+public domain).
+
+\textbf{JSON.} Synthetic structured log records, generated with two
+different random seeds, so the large file is not a repeat of the
+small one.
+
+\textbf{Random.} Bytes from \texttt{os.urandom}, used as a
+high-entropy control.
+
+Table~\ref{tab:corpus} lists the six files with their size and Shannon
+entropy (Section~\ref{sec:metrics}).
+
+\begin{table}[h]
+\centering
+\caption{The frozen test corpus}
+\label{tab:corpus}
+\begin{tabular}{lrr}
+\toprule
+File & Size (bytes) & Entropy (bits/byte) \\
+\midrule
+text\_small.txt & 10238 & 4.7268 \\
+text\_large.txt & 204799 & 4.6162 \\
+json\_small.json & 10313 & 4.5202 \\
+json\_large.json & 205012 & 4.5324 \\
+random\_small.bin & 10240 & 7.9804 \\
+random\_large.bin & 204800 & 7.9991 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Text and JSON land at 4.52 to 4.73 bits/byte. Random data lands at 7.98
+to 8.00 bits/byte. This gap gives the experiment two clearly separated
+entropy classes to compare, before any transform is applied.
+
+The corpus is frozen and checksummed.
+\texttt{data/corpus/CHECKSUMS.sha256} records the SHA-256 hash of each
+file, so the exact byte content can be checked again later with
+\texttt{shasum -a 256 -c data/corpus/CHECKSUMS.sha256}.
+\texttt{build\_corpus.py} downloads its source text live from the
+internet, so without a checksum, a later change to the Gutenberg file
+could silently change the corpus that later results are compared
+against.
+
+\section{Metrics Used}
+\label{sec:metrics}
+Five metrics are computed at each pipeline stage: entropy, chi-square,
+compression ratio, correlation, and avalanche effect. Two more,
+throughput and size overhead, come from the benchmark harness
+(\texttt{src/benchmark.py}), which runs each pipeline end to end under
+timing instrumentation rather than at a single stage.
+
+\textbf{Shannon entropy.} Bits per byte, computed from a 256-bin
+histogram of byte values:
+\begin{equation}
+H = -\sum_{i=0}^{255} p_i \log_2 p_i
+\label{eq:entropy}
+\end{equation}
+where $p_i$ is the observed frequency of byte value $i$. Higher values
+mean the byte distribution is closer to uniform (bins with a zero
+count are excluded before summing, since $\log_2 0$ is undefined).
+
+\textbf{Chi-square statistic.} Tests whether the byte-value
+distribution matches a uniform distribution over all 256 values, via
+\texttt{scipy.stats.chisquare}. A larger statistic means a larger
+departure from uniformity. Because the raw statistic scales with
+message length, comparisons in Chapter~\ref{ch:results} are also
+reported as the standardised deviate
+$(\chi^2 - \nu)/\sqrt{2\nu}$ with $\nu = 255$ degrees of freedom, which
+expresses the departure in units of the statistic's own standard
+deviation and is comparable across files of similar size.
+
+\textbf{Compression ratio.} The ratio of gzip-compressed size to
+original size. Lower values mean more redundancy. Values near or above
+1.0 mean the data is close to incompressible.
+
+\textbf{Pearson correlation.} The correlation coefficient between the
+byte values of two equal-length byte strings, usually the original
+input and a later stage's output. Values near zero mean little linear
+relationship remains between the two.
+
+\textbf{Avalanche effect.} One random bit is flipped in a copy of the
+input. Both the original and the flipped copy are run through the same
+stage. The Hamming distance between the two outputs, as a percentage of
+total bits, is recorded, and the mean across trials is the reported
+avalanche percentage. Two trial counts are used in this thesis: the
+full-pipeline runs recorded in \texttt{results/experiment\_results.csv}
+use the harness default of 25 trials, while the \texttt{post\_dna}
+measurement reported in Section~\ref{sec:results-avalanche} uses 2,000
+trials, since that is the measurement the analysis actually rests on.
+This one-bit-flip method follows the same design used to test lightweight
+block ciphers~\cite{inru}. A textbook-ideal avalanche effect lands
+close to 50\%. Listing~\ref{lst:avalanche-algo} gives the trial loop
+(\texttt{src/avalanche.py}): flip one random bit, run both copies
+through \texttt{pipeline\_encrypt\_fn}, and score the Hamming distance
+between the two outputs as a percentage of total output bits.
+
+\begin{lstlisting}[caption={Avalanche-effect trial loop: one-bit flip,
+run both copies through the pipeline, score the Hamming distance
+between the outputs (\texttt{src/avalanche.py}).},
+label={lst:avalanche-algo}]
+for _ in range(n_trials):
+    flipped = bytearray(data)
+    bit_index = random.randrange(len(data) * 8)
+    byte_index, bit_in_byte = divmod(bit_index, 8)
+    flipped[byte_index] ^= 1 << bit_in_byte
+    flipped = bytes(flipped)
+
+    ciphertext_original = pipeline_encrypt_fn(data)
+    ciphertext_flipped = pipeline_encrypt_fn(flipped)
+
+    n_bits = min(len(ciphertext_original), len(ciphertext_flipped)) * 8
+    hamming_distance = _hamming_distance_bits(
+        ciphertext_original[:n_bits // 8], ciphertext_flipped[:n_bits // 8]
+    )
+    percentages.append(100.0 * hamming_distance / n_bits)
+\end{lstlisting}
+
+\textbf{Throughput.} Data size in bytes divided by total pipeline time
+in seconds, giving bytes per second. This is measured for every pipeline
+run, but Chapter~\ref{ch:results} does not report it as a result:
+Chapter~\ref{ch:limitations} explains why a raw timing number from this
+thesis's specific, unoptimized implementation is not reported as a
+finding about the DNA-domain approach in general.
+
+\textbf{Size overhead.} The percentage increase in size from plaintext
+to the encrypted output:
+\begin{equation}
+\text{overhead} = \frac{\text{len(encrypted)} - \text{len(plaintext)}}{\text{len(plaintext)}} \times 100
+\label{eq:overhead}
+\end{equation}
+Section~\ref{sec:measurement-design} explains that which bytes count as "the
+encrypted output" changes this number a great deal.
+
+Timing uses \texttt{time.perf\_counter()}, with 20 repeated calls per
+measurement and the first call discarded as a warm-up. The median and
+interquartile range are reported, following the same repeated-measurement
+approach used in lightweight-cipher performance surveys~\cite{ascon-survey}.
+
+\section{Measurement Design: Avalanche and Size Overhead}
+\label{sec:measurement-design}
+Two of the metrics above depend not only on which pipeline stage
+produced the bytes, but on exactly which bytes get passed in. How that
+question is resolved for avalanche effect and size overhead shapes the
+numbers Chapter~\ref{ch:results} reports for both.
+
+\textbf{Avalanche effect: which stage to measure.} Section~\ref{sec:pipeline-design}
+noted that \texttt{post\_classical} output is randomized by AES-GCM's
+per-call nonce, while \texttt{post\_dna} is fully deterministic. This
+matters directly for avalanche effect, since the metric is defined as
+the Hamming distance between two outputs that differ by one flipped
+input bit. AES-GCM's nonce guarantees that any two independently
+encrypted ciphertexts look statistically unrelated regardless of the
+plaintext (Section~\ref{sec:aesgcm}), so measuring avalanche on
+Pipeline A's \texttt{post\_classical} ciphertext would report close to
+50\% whether or not the input bit was actually flipped: the nonce
+alone accounts for nearly all of the observed difference. Measuring at
+\texttt{post\_dna} instead isolates the quantity this thesis actually
+wants: with no nonce in the way, the Hamming distance between two
+\texttt{post\_dna} outputs reflects only the one flipped bit and the
+transform's own propagation behaviour.
+Section~\ref{sec:results-avalanche} reports that measurement and
+derives its expected value from Equation~\ref{eq:prefixsum}.
+
+\textbf{Size overhead: which bytes count as output.} Equation~\ref{eq:overhead}
+depends on \texttt{len(encrypted)}, and AES-GCM's output is really
+three distinct pieces: the ciphertext body, the nonce, and the
+authentication tag (Section~\ref{sec:aesgcm}). AES-GCM's CTR-mode
+encryption keeps the ciphertext body exactly the same length as the
+plaintext, so measuring overhead against the ciphertext body alone
+returns 0.0\% for every input, independent of the DNA transform or
+anything else about the data.
+
+RFC 5116's own definition of AEAD ciphertext expansion counts only the
+authentication tag: an AEAD\_AES\_256\_GCM ciphertext, the registered
+algorithm matching the AES-256 key used here, is defined as exactly 16
+octets longer than its plaintext, the tag alone (\cite{rfc5116},
+Sections 5.1--5.2). The nonce is deliberately left out of that
+definition. RFC 5116 treats it as something the application must get to
+the receiver by whatever means it chooses, noting in Section 2.1 that
+the nonce may be stored or transported with the ciphertext, or else
+reconstructed by the decrypter. This project's own pipeline
+(\texttt{src/pipeline.py}) takes the first option: it bundles
+\texttt{nonce}, \texttt{ciphertext}, and \texttt{tag} together as the
+one unit that gets stored or transmitted (Listing~\ref{lst:aead-overhead}).
+Counting the nonce alongside the tag, then, reflects this project's own
+transmitted-output convention, not a universal AEAD accounting rule.
+Counted this way, overhead becomes size-dependent, as
+Section~\ref{sec:results-overhead} reports: about 0.31\% for a 10 KB
+file and about 0.016\% for a 200 KB file, since the nonce and tag add a
+fixed number of bytes regardless of message size. The nonce length that
+produces those figures departs from both cited standards;
+Section~\ref{sec:limits-nonce} records that as a limitation.
+
+\texttt{encrypt\_aes\_gcm} itself returns the three pieces separately,
+as a tuple, not concatenated (Listing~\ref{lst:aead-overhead}, top).
+The concatenation into a single byte string, the object Equation~\ref{eq:overhead} actually measures the length of, happens on
+the caller's side, once a decision has been made about which bytes
+count as "the encrypted output."
+
+\begin{lstlisting}[caption={What gets concatenated into the full-AEAD
+byte string that Equation~\ref{eq:overhead} is measured against
+(\texttt{src/classical\_crypto.py},
+\texttt{scripts/check\_aead\_overhead\_convention.py}).},
+label={lst:aead-overhead}]
+def encrypt_aes_gcm(data: bytes, key: bytes) -> tuple[bytes, bytes, bytes]:
+    cipher = AES.new(key, AES.MODE_GCM)
+    ciphertext, tag = cipher.encrypt_and_digest(data)
+    return cipher.nonce, ciphertext, tag
+
+nonce, ciphertext, tag = encrypt_aes_gcm(plaintext, key)
+full_aead_bytes = nonce + ciphertext + tag  # what "encrypted output" means here
+\end{lstlisting}
+
+\section{Repeated-Sample Measurement for Entropy, Chi-Square, and Correlation}
+\label{sec:repeated-sample}
+Avalanche effect is measured with 2,000 trials and reported as a mean
+with a standard deviation (Section~\ref{sec:results-avalanche}).
+Entropy, chi-square, and correlation are not: each is computed once per
+data class, on the one frozen small file for that class. A single
+number carries no sense of how much it could have varied under a
+different draw of the same kind of data, so this section adds the same
+repeated-sample treatment already used for avalanche.
+
+For each data class, ten independent samples of about 10 KB are
+generated, separately from the frozen corpus (Section~\ref{sec:corpus})
+so the frozen files stay untouched. Random samples are ten fresh
+\texttt{os.urandom()} draws. JSON samples are ten freshly generated logs
+from the same generator that built the frozen corpus
+(\texttt{scripts/build\_corpus.py}), each with its own seed. Text
+samples are ten non-overlapping slices spaced evenly across the frozen
+\texttt{text\_large.txt}, so no two slices share content. Each sample is
+run through Pipeline A, and entropy, chi-square, and correlation are
+computed at every stage, using the same functions as
+Section~\ref{sec:metrics}. \texttt{scripts/measure\_repeated\_sample\_stats.py}
+implements this; \texttt{results/repeated\_sample\_stats.csv} holds the
+full set of means and standard deviations, reported in
+Section~\ref{sec:results-repeated-sample}.
+
+Where Chapter~\ref{ch:results} compares two data classes at the same
+stage, it does so with Welch's unequal-variance $t$-test over these ten
+samples per class, reporting the difference in means divided by its
+standard error rather than a bare ratio of the raw statistics.
+
+\section{Computational Environment}
+\label{sec:environment}
+All measurements reported in Chapter~\ref{ch:results} were produced on
+a single machine: Apple M2 (arm64) running macOS (Darwin 23.2.0). The
+software stack is Python 3.11.7 in the project's virtual environment,
+with PyCryptodome 3.23.0 for AES-GCM, NumPy 2.4.6, and SciPy 1.17.1 for
+the entropy and chi-square computations. The timing methodology in
+Section~\ref{sec:metrics} is sensitive to all of these; the statistical
+results are not, since the pipelines are deterministic given the same
+input, key, and reference sequence.
+% TODO: add repository URL and the commit hash the reported results
+% were generated from, once the project is archived.
+
+% ============================================================
+% CHAPTER 6 --- IMPLEMENTATION
+% ============================================================
+\chapter{Implementation}
+\label{ch:implementation}
+
+\section{Module Structure}
+\label{sec:module-structure}
+The implementation is organized into small, single-purpose modules
+under \texttt{src/}, each with its own test file under \texttt{tests/}.
+
+\begin{itemize}
+\item \texttt{dna\_codec.py}: converts between bytes, bits, and
+nucleotide sequences (Section~\ref{sec:bytes-to-dna}). Functions:
+\texttt{bytes\_to\_bits}, \texttt{bits\_to\_dna}, \texttt{dna\_to\_bits},
+\texttt{bits\_to\_bytes}.
+\item \texttt{dna\_transform.py}: the chained modulo-4 transform
+(Section~\ref{sec:mod4chain}). Functions: \texttt{dna\_transform},
+\texttt{dna\_inverse\_transform}.
+\item \texttt{classical\_crypto.py}: a thin wrapper around AES-256-GCM
+(Section~\ref{sec:aesgcm}). Functions: \texttt{encrypt\_aes\_gcm},
+\texttt{decrypt\_aes\_gcm}.
+\item \texttt{pipeline.py}: composes the two pipelines
+(Section~\ref{sec:pipeline-design}). Functions:
+\texttt{pipeline\_a\_dna\_\allowbreak plus\_classical},
+\texttt{pipeline\_b\_classical\_only}, and their matching decrypt
+functions.
+\item \texttt{metrics.py}: entropy, chi-square, compression ratio, and
+correlation (Section~\ref{sec:metrics}).
+\item \texttt{avalanche.py}: the avalanche-effect test.
+\item \texttt{benchmark.py}: timing, throughput, and size-overhead
+measurement.
+\end{itemize}
+
+\section{Revision History of the DNA Transform Design}
+\label{sec:revision-history}
+The DNA-domain transform went through three designs during implementation. Each design was kept or dropped based on what its output measured.
+
+\textbf{Design 1: SHA-256 mask plus XOR.} A mask was derived from a DNA
+sequence by hashing it, then combined with the data using XOR. Measured
+on 4,000-byte samples, text and random data both converged to about
+7.96 bits/byte of entropy after the transform. A cryptographically strong mask pushes every input toward the
+same near-maximal entropy, no matter what the input originally looked
+like. The experiment depends on measuring a difference between low-entropy and high-entropy input (Chapter~\ref{ch:aim}).
+
+Design 1
+erased that difference entirely, so it was rejected, even though every
+round-trip test passed: applying the transform, then its inverse,
+recovered the exact original bytes for every case tested, including
+random-length inputs, empty input, every single possible byte value,
+and both text and binary samples. Round-trip correctness on its own
+says nothing about whether a design preserves the entropy-class
+signal this thesis measures, which is why Design 1 could pass every
+such test and still be rejected.
+
+\textbf{Design 2: tiled mask, no feedback.} The reference sequence was
+tiled directly across the data, without hashing and without any
+feedback between positions. This preserved an entropy gap (text at
+6.805 bits/byte versus random at 7.951 bits/byte), but introduced a
+different problem. Ciphertext-only autocorrelation at a lag equal to
+the reference sequence's length measured 0.835 on structured text,
+versus about $-0.008$ for random data, a severe weakness with the same
+structural cause as a classic repeating-key XOR cipher: the same short
+mask value repeats predictably every $L$ positions, and this
+repetition survives into the output. Design 2 was rejected for this
+reason too.
+
+\textbf{Design 3: chained modulo-4 addition (final).} Adding a feedback
+term, $c_{i-1}$, to Equation~\ref{eq:mod4} means each output nucleotide
+depends on the entire stream so far, not only its position modulo $L$.
+
+Measured on the same 4,000-byte samples, autocorrelation at lag $L$
+dropped to about 0.017 to 0.018, back to chance level. The entropy gap also survived: text measured 7.272 bits/byte against random's 7.953. Both results held, so this design was kept.
+
+Two caveats attach to those Design 3 numbers. First, the
+7.272-versus-7.953 gap was measured using a
+64-nucleotide sample sequence hardcoded in a test script, not the frozen reference sequence that every pipeline run in this thesis uses (Section~\ref{sec:refseq}); Section~\ref{sec:results-correction}
+reports the gap measured against the real reference sequence
+and corpus, and explains why the two numbers differ so much. Second,
+the autocorrelation figure comes from the same test-script setup, and
+was not re-measured against the frozen reference sequence and corpus
+once those were in place. Given how strongly the reference sequence
+turns out to affect the entropy gap
+(Section~\ref{sec:results-correction}), that re-measurement is listed
+as future work in Section~\ref{sec:future-work}.
+
+% ============================================================
+% CHAPTER 7 --- RESULTS
+% ============================================================
+\chapter{Results}
+\label{ch:results}
+
+
+\section{Entropy, Chi-Square, and Compression Signal}
+\label{sec:results-entropy}
+Table~\ref{tab:results-small} reports entropy, chi-square, and
+compression ratio for the three small corpus files, at each stage of
+Pipeline A. The same pattern holds at the large file sizes.
+
+\begin{table}[h]
+\centering
+\caption{Entropy, chi-square, and compression ratio by stage, Pipeline A, small files}
+\label{tab:results-small}
+\begin{tabular}{llrrr}
+\toprule
+File & Stage & Entropy (bits/byte) & Chi-square & Compression ratio \\
+\midrule
+text\_small.txt & input & 4.7268 & 139108.219 & 0.4301 \\
+ & post\_dna & 7.9265 & 1119.518 & 0.9833 \\
+ & post\_classical & 7.9805 & 273.103 & 1.0022 \\
+json\_small.json & input & 4.5202 & 179852.453 & 0.1817 \\
+ & post\_dna & 7.8786 & 1960.032 & 0.8459 \\
+ & post\_classical & 7.9814 & 267.597 & 1.0022 \\
+random\_small.bin & input & 7.9804 & 271.800 & 1.0022 \\
+ & post\_dna & 7.9834 & 234.250 & 1.0022 \\
+ & post\_classical & 7.9827 & 242.300 & 1.0022 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At input, text and JSON measure far below random on all three metrics,
+as expected from the corpus design itself (Section~\ref{sec:corpus}).
+Fig.~\ref{fig:byte-histogram} shows why, at the level of individual
+byte values. Text's raw bytes
+cluster in a few narrow bins, mostly the printable ASCII range. Random
+bytes spread almost evenly across all 256 possible values from the
+start.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  every axis/.style={
+    width=5.3cm, height=4.2cm,
+    ybar, bar width=3.5pt,
+    ymin=0, ymax=0.5,
+    xtick=\empty,
+    ytick={0,0.1,0.2,0.3,0.4,0.5},
+    yticklabel style={font=\scriptsize},
+    title style={font=\scriptsize},
+    axis line style={gray!60},
+  }
+]
+\begin{axis}[name=hist1, title={Input: text\_small.txt},
+  ylabel={fraction of bytes}, y label style={font=\scriptsize}]
+\addplot+[fill=seqblue!70,draw=none] coordinates {
+(1,0.0521)(2,0.0)(3,0.1854)(4,0.006)(5,0.0223)(6,0.0096)(7,0.4611)(8,0.222)(9,0.0139)(10,0.0139)(11,0.0)(12,0.0)(13,0.0)(14,0.0)(15,0.0139)(16,0.0)
+};
+\end{axis}
+\begin{axis}[name=hist2, at={(hist1.right of south east)}, anchor=left of south west,
+  title={Post-DNA: text\_small.txt}, yticklabel=\empty]
+\addplot+[fill=seqblue!70,draw=none] coordinates {
+(1,0.0618)(2,0.0583)(3,0.0611)(4,0.0651)(5,0.0669)(6,0.0621)(7,0.0614)(8,0.0635)(9,0.0644)(10,0.0633)(11,0.066)(12,0.0616)(13,0.0612)(14,0.0588)(15,0.0621)(16,0.0622)
+};
+\end{axis}
+\begin{axis}[name=hist3, at={(hist2.right of south east)}, anchor=left of south west,
+  title={Input: random\_small.bin}, yticklabel=\empty]
+\addplot+[fill=seqblue!70,draw=none] coordinates {
+(1,0.0648)(2,0.0646)(3,0.0595)(4,0.0586)(5,0.058)(6,0.0593)(7,0.0604)(8,0.066)(9,0.062)(10,0.0635)(11,0.0676)(12,0.0606)(13,0.0646)(14,0.062)(15,0.0658)(16,0.0626)
+};
+\end{axis}
+\end{tikzpicture}
+\caption{Byte-value histograms (16 bins, 16 consecutive byte values
+each), computed directly from the corpus files and from Pipeline
+A's actual \texttt{post\_dna} output. The coarser binning here is for
+legibility only; every chi-square statistic in this chapter uses the
+full 256-bin histogram of Section~\ref{sec:metrics}. Left:
+\texttt{text\_small.txt}'s
+raw input bytes, concentrated in a few bins. Middle: the same file
+after the DNA transform, spread almost evenly across all 16 bins.
+Right: \texttt{random\_small.bin}'s raw input bytes, already close to
+even. The transform visibly flattens text's distribution, though
+Fig.~\ref{fig:chisquare-heatmap} shows a small difference from random
+survives underneath this flattened shape.}
+\label{fig:byte-histogram}
+\end{figure}
+
+At \texttt{post\_dna}, entropy for text and JSON rises close to
+random's level (7.9265 and 7.8786 bits/byte, against random's 7.9834),
+but chi-square tells a sharper story: text still measures 1119.518,
+about 4.8 times random's 234.250, and JSON measures 1960.032, about 8.4
+times random's value. With 255 degrees of freedom (256 byte values
+minus one), the chi-square critical value at $\alpha=0.05$ is 293.25:
+text's and JSON's \texttt{post\_dna} statistics both clear it by a wide
+margin, while every \texttt{post\_classical} value and every
+\texttt{random\_small.bin} value at any stage falls below it. Expressed
+as the standardised deviate defined in Section~\ref{sec:metrics}, the
+same three \texttt{post\_dna} values are $38.3$ for text and $75.5$ for
+JSON, against $-0.9$ for random data: text and JSON depart from
+uniformity by tens of standard deviations, while random data is
+indistinguishable from uniform. Fig.~\ref{fig:chisquare-heatmap} shows this
+pattern across all three stages at once.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  cell/.style={minimum width=2.7cm, minimum height=1.3cm, draw=black!40, font=\small},
+]
+  \node[font=\small\bfseries] at (2.7,1.0) {input};
+  \node[font=\small\bfseries] at (5.4,1.0) {post\_dna};
+  \node[font=\small\bfseries] at (8.1,1.0) {post\_classical};
+  \node[font=\small\bfseries, anchor=east] at (-0.2,0.0) {text\_small};
+  \node[font=\small\bfseries, anchor=east] at (-0.2,-1.4) {json\_small};
+  \node[font=\small\bfseries, anchor=east] at (-0.2,-2.8) {random\_small};
+
+  \node[cell, fill=seqblue!92] at (2.7,0.0) {\textcolor{white}{139108.2}};
+  \node[cell, fill=seqblue!34] at (5.4,0.0) {1119.5};
+  \node[cell, fill=seqblue!17] at (8.1,0.0) {273.1};
+
+  \node[cell, fill=seqblue!95] at (2.7,-1.4) {\textcolor{white}{179852.5}};
+  \node[cell, fill=seqblue!41] at (5.4,-1.4) {1960.0};
+  \node[cell, fill=seqblue!17] at (8.1,-1.4) {267.6};
+
+  \node[cell, fill=seqblue!17] at (2.7,-2.8) {271.8};
+  \node[cell, fill=seqblue!15] at (5.4,-2.8) {234.3};
+  \node[cell, fill=seqblue!15] at (8.1,-2.8) {242.3};
+\end{tikzpicture}
+\caption{Chi-square statistic (Pipeline A) across the three small
+corpus files and pipeline stages, from Table~\ref{tab:results-small}.
+Darker cells mean a larger departure from a uniform byte distribution;
+shading is scaled by $\log_{10}$ of the statistic, since the raw values
+span more than three orders of magnitude, but the number shown in each
+cell is untransformed statistic. The DNA transform
+(\texttt{post\_dna} column) drops text's and JSON's chi-square by more
+than two orders of magnitude from their input values, but both still
+measure clearly higher than random data's. That remaining gap
+disappears once AES-GCM (\texttt{post\_classical} column) runs: all
+nine cells in that column land within a narrow band, regardless of
+data class.}
+\label{fig:chisquare-heatmap}
+\end{figure}
+
+Compression ratio follows the same direction as chi-square. Text goes
+from 0.4301 (input) to 0.9833 (post\_dna), close to random's 1.0022.
+JSON retains more compressibility than text at the same stage: 0.1817
+(input) to 0.8459 (post\_dna), still visibly below random's ratio. At
+\texttt{post\_classical}, entropy, chi-square, and compression ratio
+all land within a narrow band across all three data classes and both
+pipelines. \texttt{results/experiment\_results.csv} confirms Pipeline
+B's \texttt{post\_classical} numbers (no DNA stage at all) fall in the
+same band as Pipeline A's, for every file. Whatever signal survives the
+DNA transform alone is gone by the time AES-GCM has run.
+
+\section{Correlation with the Original Input}
+\label{sec:results-correlation}
+Section~\ref{sec:metrics} defined Pearson correlation as a check on
+how much linear structure between a stage's output and the original
+input survives that stage, with values near zero meaning little
+structure remains. Table~\ref{tab:results-correlation} reports it for
+the three small corpus files. At \texttt{input}, correlation is
+trivially 1.0, since a stage is being compared against itself. At both
+\texttt{post\_dna} and \texttt{post\_classical}, every value sits
+within about $\pm 0.02$ of zero, consistent across all three data
+classes: essentially no linear structure survives either stage.
+
+\begin{table}[h]
+\centering
+\caption{Pearson correlation with the original input, by stage, Pipeline A, small files}
+\label{tab:results-correlation}
+\begin{tabular}{lrr}
+\toprule
+File & Stage & Correlation \\
+\midrule
+text\_small.txt & input & 1.0000 \\
+ & post\_dna & -0.0024 \\
+ & post\_classical & 0.0096 \\
+json\_small.json & input & 1.0000 \\
+ & post\_dna & -0.0070 \\
+ & post\_classical & 0.0009 \\
+random\_small.bin & input & 1.0000 \\
+ & post\_dna & -0.0051 \\
+ & post\_classical & -0.0188 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Correlation does not distinguish the DNA transform's own effect from
+AES-GCM's: both stages already look uncorrelated with the input, so
+this metric does not separately confirm the entropy-class signal
+chi-square finds at \texttt{post\_dna}. It rules out one specific kind
+of structure, a linear relationship between input and output bytes,
+without being sensitive enough to detect the smaller, non-linear signal
+chi-square does find.
+
+\section{Repeated-Sample Results}
+\label{sec:results-repeated-sample}
+Table~\ref{tab:results-repeated-sample} reports the ten-sample mean and
+standard deviation for entropy, chi-square, and correlation at each
+stage of Pipeline A, from the repeated-sample measurement described in
+Section~\ref{sec:repeated-sample}.
+
+\begin{table}[h]
+\centering
+\caption{Entropy, chi-square, and correlation, mean $\pm$ stdev over 10 independent $\sim$10 KB samples per data class, Pipeline A}
+\label{tab:results-repeated-sample}
+\begin{tabular}{llrrr}
+\toprule
+Data class & Stage & Entropy (bits/byte) & Chi-square & Correlation \\
+\midrule
+text & input & $4.6079 \pm 0.0593$ & $149039.7 \pm 5595.8$ & $1.0000 \pm 0.0000$ \\
+ & post\_dna & $7.9239 \pm 0.0040$ & $1138.5 \pm 54.9$ & $-0.0047 \pm 0.0069$ \\
+ & post\_classical & $7.9826 \pm 0.0007$ & $246.3 \pm 10.0$ & $0.0027 \pm 0.0077$ \\
+json & input & $4.5218 \pm 0.0034$ & $179696.3 \pm 171.4$ & $1.0000 \pm 0.0000$ \\
+ & post\_dna & $7.8908 \pm 0.0063$ & $1774.8 \pm 101.0$ & $0.0040 \pm 0.0094$ \\
+ & post\_classical & $7.9830 \pm 0.0012$ & $242.3 \pm 18.2$ & $-0.0038 \pm 0.0089$ \\
+random & input & $7.9819 \pm 0.0015$ & $257.1 \pm 21.7$ & $1.0000 \pm 0.0000$ \\
+ & post\_dna & $7.9827 \pm 0.0015$ & $244.6 \pm 21.1$ & $0.0033 \pm 0.0105$ \\
+ & post\_classical & $7.9815 \pm 0.0019$ & $260.9 \pm 25.4$ & $0.0003 \pm 0.0096$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The single-sample numbers already reported in Table~\ref{tab:results-small}
+and Table~\ref{tab:results-correlation} sit close to these means: text's
+\texttt{post\_dna} chi-square was 1119.518 against a ten-sample mean of
+1138.5, JSON's was 1960.032 against 1774.8, and random's \texttt{input}
+chi-square was 271.800 against 257.1. All three fall within about one
+standard deviation of the ten-sample mean, so the single frozen file was
+not an unusual draw.
+
+The gap between data classes is larger than the spread within a class.
+Applying Welch's unequal-variance $t$-test to the \texttt{post\_dna}
+chi-square samples, text's mean of 1138.5 exceeds random's 244.6 by
+48.1 standard errors, and JSON's mean of 1774.8 exceeds it by 46.9
+standard errors ($n=10$ per class in both cases). Differences of that
+size are far outside anything the observed within-class spread could
+produce, which is the evidence H1 rests on.
+Correlation stays within about
+$\pm 0.01$ of zero at \texttt{post\_dna} and \texttt{post\_classical} for
+every data class, in both mean and standard deviation, matching the
+single-sample finding in Section~\ref{sec:results-correlation} and
+confirming it holds across repeated draws, not only for the one frozen
+file.
+
+\section{Correction of the Original Entropy-Gap Estimate}
+\label{sec:results-correction}
+Section~\ref{sec:revision-history} reported an entropy gap of 7.272
+bits/byte (text) versus 7.953 bits/byte (random) for the final,
+chained modulo-4 design. That measurement used a 64-nucleotide sample
+sequence hardcoded in a test script, not the real, frozen 61-nucleotide
+reference sequence that every pipeline run in this thesis actually uses
+(Section~\ref{sec:refseq}). Table~\ref{tab:results-small} shows the
+real gap is much smaller: 7.9265 bits/byte (text, \texttt{post\_dna})
+versus 7.9834 bits/byte (random, \texttt{post\_dna}), the same
+\texttt{post\_dna}-to-\texttt{post\_dna} comparison Section~\ref{sec:results-entropy}
+uses, a difference of only 0.0569 bits/byte.
+
+This difference was traced to the reference sequence itself, not to a
+bug in the transform or the corpus, by swapping reference sequence and
+input data against each other. Holding the real corpus fixed and
+substituting the old 64-nucleotide sample reference reproduces a 0.22
+bits/byte gap, close to the original, larger estimate. Truncating the
+real corpus down to the same 4,000-byte sample size, while keeping the
+real reference, isolates the effect of sample size alone: about a 0.05
+bit gap, so sample size accounts for very little of the difference next
+to the roughly 0.17 bit swing the reference-sequence swap produces.
+Substituting the real reference into the older hand-built samples gave
+an intermediate and noticeably more variable gap, but that particular
+comparison was run as an ad hoc analysis and was never persisted as a
+script, so no reproducible figure is quoted for it here; re-running all
+of these swaps under a committed script is listed in
+Section~\ref{sec:future-work}. On the two swaps that are reproducible,
+the reference sequence, not the corpus or the transform's correctness,
+drives most of the difference.
+
+The two reference sequences differ in two ways at once, and the
+measurements above cannot separate them. The first is base composition.
+The real 61-nucleotide sequence (Section~\ref{sec:refseq}) is close to
+base-balanced: 15 A, 16 T, 15 C, 15 G, each base between 24.59\% and
+26.23\% of the sequence. The 64-nucleotide sample sequence used in
+Section~\ref{sec:revision-history} is visibly skewed: 20 A, 18 T, 16 C,
+10 G, with A appearing exactly twice as often as G. Since A maps to the
+value 0 (Section~\ref{sec:bytes-to-dna}), a reference that is
+disproportionately A contributes nothing at a large fraction of its
+positions, while a balanced reference contributes a varied offset
+throughout.
+
+The second is the period of the accumulated mask. By
+Section~\ref{sec:mod4chain}, what the transform actually adds at
+position $i$ is the running total $R_i$, whose period depends on
+$S$, the sum of the reference sequence over one full cycle. The real
+sequence gives $S = 91 \equiv 3 \pmod 4$, so $R$ has period
+$4L = 244$. The 64-nucleotide sample sequence gives
+$S = 80 \equiv 0 \pmod 4$, so its accumulated mask repeats every
+$L = 64$ positions, exactly the periodicity the feedback term was
+introduced to remove. The two candidate explanations therefore point
+the same way for these two particular sequences, and no experiment
+reported here distinguishes them. Section~\ref{sec:future-work}
+proposes the sequences needed to separate the two effects.
+
+For completeness: the real sequence contains the substring
+\texttt{AGCT} five times (Section~\ref{sec:refseq}), which under the
+mapping of Section~\ref{sec:bytes-to-dna} is the value sequence
+$0,3,2,1$, one full cycle through all four mod-4 residues. This is a
+coincidental feature of an already-balanced sequence, not evidence that
+a repeated substring improves mixing: a repeated pattern is normally a
+source of predictability, not a strength.
+
+Entropy is also not the most sensitive signal available. Chi-square
+shows a much larger relative separation from random, 4.8 to 8.4 times,
+than entropy's under-1\% relative gap. A plausible reason is that
+entropy is a compressed, log-scale summary that saturates near its
+maximum quickly, while chi-square stays sensitive to smaller deviations
+from uniformity for longer.
+
+\section{Avalanche Effect}
+\label{sec:results-avalanche}
+Section~\ref{sec:measurement-design} explained why avalanche must be measured on
+Pipeline A's \texttt{post\_dna} stage, not on the full pipeline's
+AES-GCM ciphertext. This section reports the measured numbers and then
+derives what they should have been.
+
+Fig.~\ref{fig:avalanche-comparison} compares the two measurements
+directly, for the three small corpus files. The full-pipeline
+measurement (25 trials, from \texttt{results/experiment\_results.csv})
+lands at 50.03\% (text), 50.00\% (json), and 50.04\% (random),
+regardless of data class, confirming this number reflects AES-GCM's
+random nonce and carries no information about the DNA transform. The
+DNA-transform-only measurement, run with 2,000 trials, lands at 31.23\%
+(text, stdev 1.66\%), 31.78\% (json, stdev 1.80\%), and 30.38\%
+(random, stdev 1.79\%).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  ybar, bar width=16pt,
+  width=11cm, height=6.5cm,
+  ymin=0, ymax=62,
+  ylabel={avalanche effect (\%)},
+  y label style={font=\small},
+  symbolic x coords={text,json,random},
+  xtick=data,
+  tick label style={font=\small},
+  legend style={at={(0.5,-0.22)}, anchor=north, legend columns=1, font=\small},
+  nodes near coords,
+  every node near coord/.append style={font=\scriptsize},
+  axis line style={gray!60},
+]
+\addplot+[fill=seqblue!45,draw=black!60] coordinates {(text,31.23)(json,31.78)(random,30.38)};
+\addplot+[fill=seqblue!90,draw=black!60] coordinates {(text,50.03)(json,50.00)(random,50.04)};
+\legend{{DNA transform only (2{,}000 trials, no nonce)},{Full pipeline (25 trials, includes AES-GCM nonce)}}
+\end{axis}
+\end{tikzpicture}
+\caption{Avalanche effect: the percentage of output bits that flip when
+one input bit is flipped, measured on Pipeline A's \texttt{post\_dna}
+stage (2,000 trials, deterministic) versus the full pipeline's AES-GCM
+ciphertext (25 trials). The full-pipeline bars land at essentially
+50\% for every data class, reflecting AES-GCM's random nonce rather
+than the DNA transform's own behaviour. The DNA-transform-only bars all
+land near 31\%, the value predicted analytically in this section.}
+\label{fig:avalanche-comparison}
+\end{figure}
+
+\textbf{Where 31\% comes from.} This figure is not evidence of
+diffusion in the sense the metric was designed to capture. It follows
+directly from the closed form in Equation~\ref{eq:prefixsum}. Flipping
+one input bit changes exactly one input nucleotide $p_k$ by some
+$\delta \ne 0$, and by Equation~\ref{eq:prefixsum} every output
+nucleotide from position $k$ onward is shifted by that same constant
+$\delta$, while every output nucleotide before position $k$ is
+untouched.
+
+Two quantities follow. First, how many bits a constant shift flips
+within one affected nucleotide: for $\delta = 2$ the pair
+$\{c, c+2\}$ always differs in exactly 1 of its 2 bits, so 50\%; for
+$\delta = 1$ or $\delta = 3$ it differs in 1 or 2 bits depending on
+$c$, averaging 1.5 of 2 bits, so 75\%. A randomly chosen input bit is
+the high bit of its nucleotide (giving $\delta = 2$) or the low bit
+(giving $\delta = 1$ or 3) with equal probability, so the mean over
+affected nucleotides is $(50 + 75)/2 = 62.5\%$. Second, how much of the
+output is affected at all: for a uniformly chosen flip position, half
+the stream lies after it on average. The product,
+$0.5 \times 62.5\% = 31.25\%$, is what the metric must report. The
+three measured values, 30.38\% to 31.78\%, sit on that prediction.
+
+Two consequences matter for how this number should be read. The spread
+between the three data classes is not a finding: the derivation above
+never refers to the plaintext, so the metric is essentially
+data-independent by construction, and the differences between 30.38\%,
+31.78\% and 31.23\% carry no interpretation. More importantly, the
+transform has \emph{no backward diffusion at all}. Because the shift
+applies only from the flip position onward, avalanche measured on this
+transform is a linear function of where the bit was flipped: near 62.5\%
+for a flip at the very start of the stream, and near 0\% for a flip at
+the very end. A strong block cipher reports close to 50\% regardless of
+flip position. Reporting a single mean over uniformly chosen positions,
+as the standard one-bit-flip method does, hides this entirely.
+
+The chained modulo-4 transform therefore propagates changes, but it does
+not diffuse them in the sense a cipher does. Chapter~\ref{ch:limitations}
+returns to what this implies about the transform's standing as a
+security mechanism.
+
+\section{Size Overhead}
+\label{sec:results-overhead}
+Section~\ref{sec:measurement-design} explained why \texttt{size\_overhead()},
+computed against the AES-GCM ciphertext body alone, always returns
+0.0\%. \texttt{results/table\_throughput\_size\_overhead.csv} confirms
+this directly: the \texttt{size\_overhead\_body\_pct} column reads
+exactly 0.0 for all 30 rows, without a single exception.
+
+Counting the nonce and tag alongside the ciphertext, as
+\texttt{size\_overhead\_full\_aead\_pct} does, gives a size-dependent number. Table~\ref{tab:overhead} reports it for all six
+corpus files.
+
+\begin{table}[h]
+\centering
+\caption{Full-AEAD size overhead (nonce + ciphertext + tag versus plaintext)}
+\label{tab:overhead}
+\begin{tabular}{lrr}
+\toprule
+File & Size (bytes) & Overhead (\%) \\
+\midrule
+text\_small.txt & 10238 & 0.3126 \\
+json\_small.json & 10313 & 0.3103 \\
+random\_small.bin & 10240 & 0.3125 \\
+text\_large.txt & 204799 & 0.0156 \\
+json\_large.json & 205012 & 0.0156 \\
+random\_large.bin & 204800 & 0.0156 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The fixed 32-byte overhead (a 16-byte nonce plus a 16-byte tag) costs
+proportionally far more on the small files, about 0.31\%, than on the
+large files, about 0.016\%, a difference of roughly 20 times. This
+pattern is the same across all three data classes, since the overhead
+depends only on the fixed nonce and tag sizes, not on the content of
+the file.
+
+% ============================================================
+% CHAPTER 8 --- DISCUSSION
+% ============================================================
+\chapter{Discussion}
+\label{ch:discussion}
+
+\section{Answering the Research Question}
+Chapter~\ref{ch:aim} stated two hypotheses. Hypothesis 1: the DNA-encoding
+transform produces a measurably different statistical signature on
+low-entropy data than on high-entropy data. Hypothesis 2: that effect does not
+survive classical encryption.
+
+H1 is supported, though the size of the effect depends on which metric
+is used. Entropy alone shows only a small gap:
+0.05 to 0.10 bits/byte between text or JSON and random data at the
+\texttt{post\_dna} stage (Section~\ref{sec:results-correction}).
+Chi-square shows a much clearer gap: text and JSON measure 4.8 to 8.4
+times random's chi-square value at the same stage, or 38.3 and 75.5
+standardised deviations from uniformity against random's $-0.9$
+(Section~\ref{sec:results-entropy}), a separation confirmed at 48.1 and
+46.9 standard errors across ten independent samples per class
+(Section~\ref{sec:results-repeated-sample}).
+
+The avalanche measurement does not contribute evidence for H1.
+Section~\ref{sec:results-avalanche} shows the 30 to 32\% figure is the
+analytically predicted consequence of the transform being a prefix sum,
+independent of the plaintext, so it neither separates the data classes
+nor demonstrates diffusion.
+
+H2 is also supported. Every metric measured
+at \texttt{post\_classical} lands within a narrow band, regardless of
+data class or whether Pipeline A or B produced it
+(Section~\ref{sec:results-entropy}). AES-GCM erases the DNA transform's
+own statistical signature. Whatever the transform does to the data on
+its own, it does not survive classical encryption.
+
+\section{What the Entropy-Gap Correction Means}
+Section~\ref{sec:results-correction} corrected an earlier, larger
+estimate of the entropy gap, first reported in
+Section~\ref{sec:revision-history}, down by roughly an order of
+magnitude, and the cause is worth stating plainly. The gap's size was
+not a fixed property of the DNA transform by itself. It depended on
+which specific reference sequence was mixed with the data, and the two
+sequences compared differ both in base composition and in the period of
+the accumulated mask they induce. A result of this kind is therefore
+not portable to a different reference sequence without re-measuring it,
+and it is not yet known which of the two properties carries the effect.
+Chapter~\ref{ch:limitations} returns to this point.
+
+\section{Why Chi-Square Matters More Than Entropy Alone}
+Entropy is the most familiar of the metrics used at the
+\texttt{post\_dna} stage, but Section~\ref{sec:results-correction}
+showed it is also the least sensitive one available here. A signal
+that entropy alone would call negligible, under a 1\% relative
+difference, still shows up clearly in chi-square, at 4.8 to 8.4 times
+random's value and tens of standard deviations from uniformity. A
+reader relying on entropy alone could reasonably conclude the DNA
+transform has almost no effect on the data. That conclusion would be
+wrong.
+
+The avalanche metric illustrates the same lesson from the opposite
+direction. Taken at face value, 30 to 32\% looks like evidence of
+meaningful diffusion; derived from the transform's closed form, it
+turns out to be a fixed consequence of the construction that says
+nothing about the data at all (Section~\ref{sec:results-avalanche}).
+Reporting several metrics side by side is what surfaces both cases, but
+only if each metric's expected value under the null construction is
+worked out rather than assumed.
+
+\section{Practical Implications}
+The size-overhead results
+(Section~\ref{sec:results-overhead}) show AES-GCM's own on-wire cost is
+small and shrinks further as messages grow, about 0.31\% for a 10 KB
+message and 0.016\% for a 200 KB one. This cost comes from the
+classical layer, not from the DNA transform: \texttt{post\_dna} output
+is always the same length as the input
+(Section~\ref{sec:bytes-to-dna}). The DNA transform's own computational
+cost is a separate question, left open for the reasons
+Section~\ref{sec:limits-performance} gives.
+
+\section{Relation to DNA-LWCS and the Wider Literature}
+Chapter~\ref{ch:related} noted that DNA-LWCS~\cite{aqeel2025} reports a
+different set of metrics, correlation, encryption time, and energy
+use, on image data, evaluated as a whole system against other published
+schemes, so no direct numeric comparison with this thesis is possible.
+What this thesis contributes instead is a question that complements
+DNA-LWCS's own evaluation: whether a DNA-domain encoding step, on its
+own, leaves a statistically detectable trace that depends on the
+input's structure, and whether that trace survives once a real
+classical cipher is layered on top. The answer here, yes to the first
+and no to the second, is a kind of result an image-focused,
+whole-system evaluation was not designed to produce.
+
+% ============================================================
+% CHAPTER 9 --- LIMITATIONS
+% ============================================================
+\chapter{Limitations}
+\label{ch:limitations}
+
+\section{Statistical Testing Is Not Cryptanalysis}
+\label{sec:limits-not-cryptanalysis}
+Chapter~\ref{ch:aim} already stated this limitation as a scope
+boundary, adapted from NIST SP 800-22's own caveat~\cite{nist80022}:
+passing or failing a statistical test says nothing directly about
+whether a cipher, or a DNA-domain transform, is cryptographically
+secure. This thesis's chi-square and entropy results
+(Section~\ref{sec:results-entropy}) describe how uniform the byte
+distribution looks. They do not demonstrate, or rule out, any specific
+attack.
+
+The transform's own structure makes the point concretely. By
+Equation~\ref{eq:prefixsum}, consecutive output nucleotides satisfy
+$c_i - c_{i-1} \equiv p_i + r_{i \bmod L} \pmod 4$, and the reference
+sequence $r$ is public by design (Section~\ref{sec:refseq}). Anyone
+holding \texttt{post\_dna} output can therefore recover the plaintext
+exactly, in a single pass, by differencing adjacent nucleotides and
+subtracting the known reference value. The flattened byte distribution
+visible in Fig.~\ref{fig:byte-histogram} is cosmetic in this sense: the
+original structure is fully present, one differencing step away. This
+is not a flaw in the measurements, and it does not affect H1 or H2,
+both of which concern statistical signatures rather than
+recoverability. It does mean the \texttt{post\_dna} measurements should
+be read as diagnostics of the transform and nothing more.
+Confidentiality in the full pipeline rests on AES-GCM alone, and this
+thesis makes no claim otherwise (Chapter~\ref{ch:intro}'s caveat).
+
+\section{A Single, Fixed Reference Sequence}
+Section~\ref{sec:results-correction} showed the measured entropy gap's
+size depends heavily on which reference sequence is used, not only on
+the transform's design. This thesis measured exactly one reference
+sequence (Section~\ref{sec:refseq}): a 61-nucleotide sequence,
+close to base-balanced, with two internal repeated runs, and with
+$S \equiv 3 \pmod 4$. A different reference
+sequence, shorter, longer, more skewed in its base composition, or with
+a different value of $S$, could plausibly produce a smaller or larger
+gap. This thesis does not test that range, and as
+Section~\ref{sec:results-correction} notes, the one alternative
+sequence it did compare against differs on both axes at once, so the
+two candidate mechanisms remain confounded. The reference-sequence
+dependency is itself a finding, but it also means the
+exact gap sizes reported in Chapter~\ref{ch:results} should not be read
+as a universal property of the chained modulo-4 design, only as this
+specific sequence's result.
+
+\section{Corpus Size and Composition}
+The corpus covers three data classes at two sizes each, six files in
+total (Section~\ref{sec:corpus}). This is enough to show a consistent
+pattern across text, JSON, and random data, at a small and a large
+size. It is not a large, statistically representative sample within
+each class. The JSON files are synthetic log records, not captured
+production traffic. The text files come from one 19th-century novel,
+not a range of authors or writing styles. A wider corpus, with more
+files per class, more classes, or real IoT traffic captures, could show
+a different range of gap sizes than the ones reported here. The
+underlying pattern itself, a signal at \texttt{post\_dna} that is
+gone at \texttt{post\_classical}, held consistently across every file
+actually tested, but six files is still a narrow base for a broader
+claim.
+
+\section{Implementation-Specific Performance}
+\label{sec:limits-performance}
+The DNA transform in this thesis is implemented as a direct,
+pure-Python, per-nucleotide loop (Section~\ref{sec:module-structure}),
+not an optimized or compiled implementation. Any conclusion about the
+transform's computational cost would depend heavily on implementation
+choices not tested here.
+This thesis's results chapter reports statistical signal, not detailed
+timing comparisons, precisely to avoid overstating what one specific,
+unoptimized implementation's speed says about the DNA-domain approach
+in general. Chapter~\ref{ch:intro}'s caveat, that this thesis does not
+test whether DNA encoding is lightweight in a performance sense,
+follows directly from this.
+
+\section{A Non-Standard AES-GCM Nonce Length}
+\label{sec:limits-nonce}
+The size-overhead figures in Section~\ref{sec:results-overhead} assume
+PyCryptodome's default AES-GCM nonce length of 16 bytes (128 bits),
+which this project uses rather than explicitly requesting a shorter
+one. Both standards cited in this thesis point elsewhere. NIST SP
+800-38D recommends a 96-bit (12-byte) nonce and specifies a different,
+GHASH-based derivation of the internal counter block for any other
+length~\cite{nist80038d}. RFC 5116 goes further for the registered
+algorithm: AEAD\_AES\_256\_GCM fixes both the minimum and the maximum
+nonce length at 12 octets~\cite{rfc5116}, so a 16-byte nonce places
+this project's construction outside the algorithm whose 16-octet
+ciphertext expansion Section~\ref{sec:measurement-design} cites.
+
+The consequence for the reported numbers is small: the fixed overhead
+is 32 bytes (16-byte nonce plus 16-byte tag) rather than the 28 bytes
+a 12-byte nonce would give, moving a 10 KB file's overhead from
+0.3126\% to about 0.2735\%. That is far smaller than the roughly
+20-fold gap between small- and large-file overhead on which
+Section~\ref{sec:results-overhead}'s conclusion actually rests. It is
+nonetheless an unrequested departure from both cited standards rather
+than a tested design choice, and a corrected implementation should
+request a 12-byte nonce explicitly.
+
+\section{Scope Boundaries Not Revisited}
+Two exclusions announced in Chapter~\ref{ch:aim} are worth restating as
+limitations rather than choices. ECC/ECDH was not implemented, so the
+original DNA-plus-ECC combination was never run even once as a sanity
+check against this thesis's AES-GCM baseline; the ablation in
+Fig.~\ref{fig:pipelines} does not depend on it, but neither does this
+thesis verify that its DNA-domain stage behaves as the source works'
+does. The full NIST STS suite was likewise not run, so the statistical
+picture rests on the five metrics of Section~\ref{sec:metrics} rather
+than on a standard battery.
+
+% ============================================================
+% CHAPTER 10 --- SUMMARY AND FUTURE WORK
+% ============================================================
+\chapter{Summary and Future Work}
+\label{ch:summary}
+
+\section{Contributions}
+This thesis set out to determine whether a DNA-domain encoding step
+leaves a measurable, structure-dependent statistical trace on data,
+and whether that trace survives AES-GCM encryption. Concretely, this
+work produced the following:
+
+\begin{itemize}
+\item \textbf{An invertible DNA-domain transform with feedback.} The
+chained modulo-4 design (Section~\ref{sec:mod4chain}) combines a
+public reference sequence with the plaintext and a feedback term. Its
+round-trip test suite confirms it correctly recovers the original data
+across edge cases, including random-length inputs, empty input, every
+possible byte value, and text and binary samples
+(\texttt{tests/test\_dna\_transform.py}).
+
+\item \textbf{A closed-form characterisation of that transform.}
+Equation~\ref{eq:prefixsum} shows the design is a prefix sum, which
+determines both its avalanche behaviour
+(Section~\ref{sec:results-avalanche}) and the period of the mask it
+applies (Section~\ref{sec:refseq}).
+
+\item \textbf{An ablation methodology isolating the transform's
+effect.} Two pipelines share the same key and cipher and differ only
+in whether the DNA step runs (Section~\ref{sec:pipeline-design}).
+
+\item \textbf{A reproducible, checksummed test corpus.} Six frozen
+files across three data classes and two sizes
+(Section~\ref{sec:corpus}), with entropy, chi-square, compression,
+correlation, avalanche, and overhead measured at each pipeline stage.
+
+\item \textbf{A modular, tested implementation.} The pipeline is split
+into single-purpose modules, each with its own test file
+(Section~\ref{sec:module-structure}).
+
+\item \textbf{A measurable pre-encryption signal.} Text and JSON
+produce a chi-square statistic 4.8--8.4 times higher than random
+input at the \texttt{post\_dna} stage, separated by 48.1 and 46.9
+standard errors across ten samples per class
+(Sections~\ref{sec:results-entropy}, \ref{sec:results-repeated-sample}).
+
+\item \textbf{No surviving signal after AES-GCM.} Every metric
+measured after encryption lands within a narrow band, regardless of
+data class or whether the DNA step ran
+(Section~\ref{sec:results-entropy}).
+
+\item \textbf{A documented account of two rejected designs.} A
+SHA-256-mask-and-XOR transform erased the entropy difference the
+experiment depends on measuring
+(Section~\ref{sec:revision-history}). A tiled mask without feedback
+preserved that difference but produced an autocorrelation of 0.835 at
+the reference sequence's own length, and was rejected for it.
+
+\end{itemize}
+
+A DNA-domain encoding step of this kind is not a substitute for
+classical encryption. It has a small statistical effect of its own
+before encryption, and AES-GCM removes that effect completely.
+
+\section{Future Work}
+\label{sec:future-work}
+Four items follow directly from the limitations above, in rough order
+of how cheaply they could be done.
+
+\textbf{Separate base balance from mask period.}
+Section~\ref{sec:results-correction} leaves two candidate explanations
+for the reference sequence's effect confounded, because the two
+sequences compared differ on both. Constructing four reference
+sequences that cross the two factors, base-balanced and skewed against
+$S \equiv 0$ and $S \not\equiv 0 \pmod 4$, and re-measuring the
+entropy gap for each would resolve which one carries the effect. The
+same sweep would test whether the lag-$L$ autocorrelation that
+Design 2 suffered from returns when $S \equiv 0$, as
+Section~\ref{sec:mod4chain} predicts it should.
+
+\textbf{Re-measure the swap analysis under a committed script.} The
+reference-sequence swaps in Section~\ref{sec:results-correction} were
+partly ad hoc, and one of them is not reproducible. Persisting all of
+them as a script under \texttt{scripts/} would bring that analysis up
+to the reproducibility standard the rest of the project follows, and
+would also cover the Design 3 autocorrelation re-measurement noted in
+Section~\ref{sec:revision-history}.
+
+\textbf{Report avalanche as a function of flip position.}
+Section~\ref{sec:results-avalanche} shows the single averaged avalanche
+figure conceals the transform's lack of backward diffusion. Plotting
+Hamming distance against the position of the flipped bit would make
+that visible in one figure, and would provide a template for evaluating
+any other stream-structured transform against the same metric.
+
+\textbf{Extend the statistical battery and the corpus.} The five
+metrics used here could be extended toward the NIST STS suite, in
+particular the serial and runs tests, which are sensitive to the kind
+of positional structure a prefix sum leaves behind and which
+Pearson correlation demonstrably is not
+(Section~\ref{sec:results-correlation}). Pairing that with captured IoT
+traffic rather than synthetic JSON would address the corpus
+limitation directly.
+
+% ============================================================
+% BIBLIOGRAPHY
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{iotanalytics2025}
+IoT Analytics,
+\emph{Number of Connected IoT Devices Growing 14\% to 21.1 Billion
+Globally}, 2025.
+\url{https://iot-analytics.com/number-connected-iot-devices/}
+
+\bibitem{sonicwall2024}
+SonicWall,
+\emph{2024 SonicWall Mid-Year Cyber Threat Report}, 2024.
+
+\bibitem{stationx2026}
+StationX,
+\emph{IoT Security Statistics: Threats and Trends}, 2026.
+\url{https://www.stationx.net/iot-security-statistics/}
+
+\bibitem{unit42-2020}
+Palo Alto Networks, Unit 42,
+\emph{2020 Unit 42 IoT Threat Report}, 2020.
+\url{https://unit42.paloaltonetworks.com/iot-threat-report-2020/}
+
+\bibitem{zinabu2025}
+Zinabu N.~G., Marye Y.~W., Tune K.~K., Demilew S.~A.,
+\emph{Comprehensive Analysis of Lightweight Cryptographic Algorithms
+for Battery-Limited Internet of Things Devices}, International Journal
+of Distributed Sensor Networks, 2025.
+\url{https://doi.org/10.1155/dsn/9639728}
+
+\bibitem{thakor2021}
+Thakor V.~A., Razzaque M.~A., Khandaker M.~R.~A.,
+\emph{Lightweight Cryptography Algorithms for Resource-Constrained IoT
+Devices: A Review, Comparison and Research Opportunities}, IEEE Access,
+vol.~9, pp.~28177--28193, 2021.
+\url{https://doi.org/10.1109/ACCESS.2021.3052867}
+
+\bibitem{nist800232}
+Turan M.~S., McKay K., et~al.,
+\emph{Ascon-Based Lightweight Cryptography Standards for Constrained
+Devices}, NIST Special Publication 800-232, National Institute of
+Standards and Technology, 2025.
+\url{https://doi.org/10.6028/NIST.SP.800-232}
+
+\bibitem{aqeel2025}
+Aqeel S., Khan A.~S., Abbasi I.~A., Algarni F., Grzonka D.,
+\emph{Enhancing IoT security with a DNA-based lightweight cryptography
+system}, Scientific Reports, vol.~15, art.~13367, 2025.
+\url{https://doi.org/10.1038/s41598-025-96292-0}
+
+\bibitem{dnaecc}
+Barman P., Saha B.,
+\emph{DNA Encoded Elliptic Curve Cryptography System for IoT Security},
+arXiv:2311.11393, 2023.
+\url{https://arxiv.org/abs/2311.11393}
+
+\bibitem{nist80022}
+Rukhin A., et~al.,
+\emph{A Statistical Test Suite for Random and Pseudorandom Number
+Generators for Cryptographic Applications}, NIST Special Publication
+800-22 Rev.~1a, National Institute of Standards and Technology, 2010.
+\url{https://doi.org/10.6028/NIST.SP.800-22r1a}
+
+\bibitem{nist80038d}
+Dworkin M.,
+\emph{Recommendation for Block Cipher Modes of Operation:
+Galois/Counter Mode (GCM) and GMAC}, NIST Special Publication
+800-38D, National Institute of Standards and Technology, 2007.
+\url{https://doi.org/10.6028/NIST.SP.800-38D}
+
+\bibitem{sec1}
+Certicom Research,
+\emph{SEC 1: Elliptic Curve Cryptography}, Standards for Efficient
+Cryptography, Version 2.0, 2009.
+\url{https://www.secg.org/sec1-v2.pdf}
+
+\bibitem{inru}
+Tiwari S.~K., Awasthi A., Chakrabarti S., Yadav S.,
+\emph{INRU: A Quasigroup Based Lightweight Block Cipher},
+arXiv:2112.07411, 2021.
+\url{https://arxiv.org/abs/2112.07411}
+
+\bibitem{ascon-survey}
+Kaur J., Cintas-Canto A., Mozaffari-Kermani M., Azarderakhsh R.,
+\emph{A Comprehensive Survey on the Implementations, Attacks, and
+Countermeasures of the Current NIST Lightweight Cryptography Standard
+(ASCON)}, arXiv:2304.06222, 2023.
+\url{https://arxiv.org/abs/2304.06222}
+
+\bibitem{rfc5116}
+McGrew D.,
+\emph{An Interface and Algorithms for Authenticated Encryption}, RFC
+5116, Internet Engineering Task Force, 2008.
+\url{https://www.rfc-editor.org/rfc/rfc5116.html}
+
+\end{thebibliography}
+
+% TODO: the bibliography is still thin for a Master's thesis (15 entries).
+% Related Work rests on two DNA-cryptography papers, one of which
+% Section 4.1 admits was not reviewed in depth. Broaden with:
+%   - the wider DNA-cryptography literature (Gehani/Reif/Bancroft and
+%     the DNA image-encryption line that followed)
+%   - additional lightweight-cipher benchmarking work beyond [ascon-survey]
+%   - a source for the classical entropy of written English
+% See docs/milestone_plan.md.
+
+% ============================================================
+% LIST OF FIGURES / TABLES / LISTINGS
+% ============================================================
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+\lstlistoflistings
+\addcontentsline{toc}{chapter}{List of Listings}
+
+\end{document}
